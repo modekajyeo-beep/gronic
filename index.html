@@ -7,9 +7,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>실시간 멀티플레이어 게임</title>
+    <title>실시간 멀티플레이어 RPG 게임</title>
 
-    <!-- 🎨 1. 바깥에 있는 style.css 옷을 입혀라! -->
+    <!-- 🎨 외부 CSS 스타일 불러오기 -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,36 +21,65 @@
         <button class="primary-btn" style="width: 250px;" onclick="location.reload()">새로고침 후 재접속</button>
     </div>
 
-    <!-- STEP 1: 설정 화면 -->
+    <!-- STEP 1: 로그인 & 회원가입 화면 -->
     <div id="setup-screen" class="overlay-screen">
         <div id="login-box">
-            <h2>캐릭터 프로필 생성</h2>
+            <h2>🎮 온라인 키우기 RPG</h2>
             
-            <div class="input-group">
-                <label for="nickname-input">닉네임</label>
-                <input type="text" id="nickname-input" placeholder="최대 8자 입력" maxlength="8">
+            <!-- 로그인/회원가입 탭 버튼 -->
+            <div class="auth-tabs">
+                <button id="tab-login-btn" class="auth-tab-btn active" onclick="switchAuthTab('login')">로그인</button>
+                <button id="tab-signup-btn" class="auth-tab-btn" onclick="switchAuthTab('signup')">회원가입</button>
             </div>
 
-            <div class="input-group">
-                <label>플레이할 캐릭터</label>
-                <div class="char-container">
-                    <div class="char-card selected" id="card-char1" onclick="selectInitialChar('char1')">
-                        <div class="char-img-box">
-                            <img src="./gojo.png" alt="고조사토루" id="img-char1" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORTH5CYII='">
+            <!-- 1. 로그인 폼 -->
+            <div id="login-form">
+                <div class="input-group">
+                    <label>아이디</label>
+                    <input type="text" id="login-id" placeholder="아이디 입력">
+                </div>
+                <div class="input-group">
+                    <label>비밀번호</label>
+                    <input type="password" id="login-pw" placeholder="비밀번호 입력">
+                </div>
+                <button class="primary-btn" onclick="handleLogin()">로그인하기</button>
+            </div>
+
+            <!-- 2. 회원가입 폼 -->
+            <div id="signup-form" style="display: none;">
+                <div class="input-group">
+                    <label>생성할 아이디</label>
+                    <input type="text" id="signup-id" placeholder="아이디">
+                </div>
+                <div class="input-group">
+                    <label>비밀번호</label>
+                    <input type="password" id="signup-pw" placeholder="비밀번호">
+                </div>
+                <div class="input-group">
+                    <label>게임 닉네임</label>
+                    <input type="text" id="signup-nickname" placeholder="최대 8자 입력" maxlength="8">
+                </div>
+                <div class="input-group">
+                    <label>대표 캐릭터 선택</label>
+                    <div class="char-container">
+                        <div class="char-card selected" id="card-char1" onclick="selectInitialChar('char1')">
+                            <div class="char-img-box">
+                                <img src="./gojo.png" alt="고조사토루">
+                            </div>
+                            <span class="char-name">고조사토루</span>
                         </div>
-                        <span class="char-name">고조사토루</span>
-                    </div>
-                    
-                    <div class="char-card" id="card-char2" onclick="selectInitialChar('char2')">
-                        <div class="char-img-box">
-                            <img src="./luffy.png" alt="루피" id="img-char2" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORTH5CYII='">
+                        
+                        <div class="char-card" id="card-char2" onclick="selectInitialChar('char2')">
+                            <div class="char-img-box">
+                                <img src="./luffy.png" alt="루피">
+                            </div>
+                            <span class="char-name">루피</span>
                         </div>
-                        <span class="char-name">루피</span>
                     </div>
                 </div>
+                <button class="primary-btn" onclick="handleSignUp()">회원가입 완료</button>
             </div>
 
-            <button class="primary-btn" onclick="confirmSetup()">입장하기</button>
         </div>
     </div>
 
@@ -59,23 +88,29 @@
         <div id="user-profile-bar">
             <img id="profile-avatar" src="" alt="프로필">
             <div id="profile-info">
-                <span id="profile-nickname">닉네임</span>
-                <span id="profile-status">● 온라인</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span id="profile-level-badge">Lv.1</span>
+                    <span id="profile-nickname">닉네임</span>
+                </div>
+                <div class="exp-bar-container">
+                    <div id="exp-bar-fill" class="exp-bar-fill" style="width: 0%;"></div>
+                    <span id="exp-bar-text" class="exp-bar-text">EXP 0 / 100</span>
+                </div>
             </div>
         </div>
 
         <div class="lobby-menu">
-            <button class="action-btn" onclick="openRecordBox()">💪 헬스 기록 보관함</button>
-            <button class="action-btn" onclick="alert('꾸미기 기능은 추후 업데이트 될 예정입니다!')">🎨 캐릭터 꾸미기 (준비중)</button>
+            <button class="action-btn" onclick="openRecordBox()">💪 헬스 기록 보관함 (+50 EXP)</button>
             <button class="action-btn start-btn" onclick="enterGame()">🎮 게임 공간 입장하기</button>
+            <button class="action-btn close-btn" onclick="location.reload()" style="font-size:14px; padding:12px;">로그아웃</button>
         </div>
     </div>
 
-    <!-- 헬스 기록 보관함 화면 (PIN 4자리 + 날짜별 선택기) -->
+    <!-- 헬스 기록 보관함 화면 -->
     <div id="record-screen" class="overlay-screen" style="display: none; background-color: rgba(10, 10, 10, 0.95); z-index: 9999;">
         <div id="record-box">
             
-            <!-- 🔑 1단계: 4자리 비밀코드 입력 -->
+            <!-- 1단계: 4자리 PIN 입력 -->
             <div id="pin-view" class="pin-box">
                 <h2>🔒 개인 보관함 4자리 비밀코드</h2>
                 <p style="color:#aaa; font-size:14px; margin:0 0 10px 0;">나만의 비밀 4자리 코드를 입력하세요!</p>
@@ -86,14 +121,13 @@
                 </div>
             </div>
 
-            <!-- 📝 2단계: 메인 기록 화면 -->
+            <!-- 2단계: 메인 기록 화면 -->
             <div id="main-record-view" style="display: none; width: 100%;">
                 <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:10px;">
                     <h2 style="margin:0;">💪 헬스 기록 보관함</h2>
                     <span id="active-pin-tag" style="color:#00ff88; font-weight:bold; font-size:13px; background:#222; padding:4px 8px; border-radius:6px; border:1px solid #00ff88;">코드: ****</span>
                 </div>
 
-                <!-- 📅 날짜 선택기 -->
                 <div class="date-picker-group">
                     <label for="workout-date">📅 기록 날짜:</label>
                     <input type="date" id="workout-date" class="date-input" onchange="onDateOrTabChange()">
@@ -106,10 +140,10 @@
                     <button class="tab-btn" id="tab-shoulder" onclick="changeTab('shoulder')">어깨</button>
                 </div>
 
-                <textarea id="record-textarea" placeholder="선택한 날짜의 득근 기록을 작성하세요!&#13;&#10;예) 덤벨 숄더 프레스 20kg 4세트"></textarea>
+                <textarea id="record-textarea" placeholder="선택한 날짜의 득근 기록을 작성하세요!&#13;&#10;기록 저장 시 경험치 +50 EXP를 획득합니다!"></textarea>
                 
                 <div class="record-actions">
-                    <button class="primary-btn" onclick="saveRecord()">저장하기</button>
+                    <button class="primary-btn" onclick="saveRecord()">저장하기 (+50 EXP)</button>
                     <button class="primary-btn close-btn" onclick="closeRecordBox()">닫기</button>
                 </div>
             </div>
@@ -119,7 +153,15 @@
 
     <!-- STEP 3: 게임 화면 -->
     <div id="game-screen">
-        <p style="margin: 0 0 15px 0; color: #888; font-size: 14px; font-weight: bold;">조작: PC는 방향키 / 모바일은 화면 버튼</p>
+        <div id="ingame-hud">
+            <span id="hud-level">Lv.1</span>
+            <div class="exp-bar-container" style="width: 180px;">
+                <div id="hud-exp-fill" class="exp-bar-fill" style="width: 0%;"></div>
+                <span id="hud-exp-text" class="exp-bar-text">0 / 100</span>
+            </div>
+        </div>
+
+        <p style="margin: 10px 0; color: #888; font-size: 13px; font-weight: bold;">조작: PC 방향키 / 모바일 화면 버튼</p>
         
         <div id="game-container">
             <canvas id="gameCanvas" width="600" height="400"></canvas>
@@ -135,7 +177,7 @@
         </div>
     </div>
 
-    <!-- ⚡ 2. 바깥에 있는 script.js 건전지를 끼워라! -->
+    <!-- ⚡ 외부 JS 파일 불러오기 -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
