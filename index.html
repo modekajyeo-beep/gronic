@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 캐시 방지 (수정 시 즉각 반영을 위함) -->
+    <!-- 캐시 방지 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -31,9 +31,6 @@
             overflow: hidden;
         }
 
-        /* ---------------------------------- */
-        /* 공통 오버레이 (팝업) 화면         */
-        /* ---------------------------------- */
         .overlay-screen {
             position: fixed;
             top: 0;
@@ -49,7 +46,6 @@
 
         /* STEP 1: 로그인(설정) 화면 */
         #setup-screen {
-            /* GitHub에 bg.png를 올리셨다면 배경이 적용됩니다. 없으면 기본 검은색 */
             background-image: url('./bg.png');
             background-size: cover;
             background-position: center;
@@ -134,6 +130,7 @@
             background-color: rgba(0, 255, 136, 0.05);
         }
 
+        /* 흰색 배경 투명화(Multiply) 적용을 위해 박스 배경을 흰색으로 변경 */
         .char-img-box {
             width: 80px;
             height: 80px;
@@ -142,13 +139,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: transparent;
+            background-color: #ffffff; 
         }
 
+        /* HTML 이미지에 multiply 꼼수 적용 */
         .char-img-box img {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            mix-blend-mode: multiply; 
         }
 
         .char-name {
@@ -203,7 +202,8 @@
             border-radius: 50%;
             border: 2px solid #00ff88;
             object-fit: contain;
-            background-color: #fff;
+            background-color: #ffffff;
+            mix-blend-mode: normal; /* 로비 아바타는 테두리가 있어서 투명화 제외 */
         }
 
         #profile-info {
@@ -269,7 +269,8 @@
             border-radius: 12px;
             overflow: hidden;
             max-width: 100%;
-            background-color: #f0f0f0; /* 캐릭터가 돋보이도록 밝은 톤 배경 */
+            /* 캔버스 꼼수를 위해 배경을 완전 흰색으로 세팅 */
+            background-color: #ffffff; 
             border: 4px solid #333;
         }
 
@@ -347,7 +348,6 @@
 </head>
 <body>
 
-    <!-- 잠수 튕김 화면 -->
     <div id="afk-screen">
         <h1>연결이 종료되었습니다 💤</h1>
         <p>3분 동안 움직임이 없어 로비에서 퇴장되었습니다.</p>
@@ -367,7 +367,6 @@
             <div class="input-group">
                 <label>플레이할 캐릭터</label>
                 <div class="char-container">
-                    <!-- GitHub에 업로드할 로컬 파일명 연결 (gojo.png) -->
                     <div class="char-card selected" id="card-char1" onclick="selectInitialChar('char1')">
                         <div class="char-img-box">
                             <img src="./gojo.png" alt="고조사토루" id="img-char1" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='">
@@ -375,7 +374,6 @@
                         <span class="char-name">고조사토루</span>
                     </div>
                     
-                    <!-- GitHub에 업로드할 로컬 파일명 연결 (luffy.png) -->
                     <div class="char-card" id="card-char2" onclick="selectInitialChar('char2')">
                         <div class="char-img-box">
                             <img src="./luffy.png" alt="루피" id="img-char2" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='">
@@ -415,7 +413,6 @@
 
         <div id="status">서버 연결 중...</div>
 
-        <!-- 모바일 패드 -->
         <div id="dpad">
             <div class="dpad-btn" id="btn-up">▲</div>
             <div class="dpad-btn" id="btn-left">◀</div>
@@ -443,7 +440,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // GitHub에 업로드된 로컬 파일 경로를 지정합니다.
         const CHAR_IMAGES = {
             char1: new Image(),
             char2: new Image()
@@ -462,7 +458,7 @@
             charType: "char1",
             x: Math.floor(Math.random() * (canvas.width - 60)),
             y: Math.floor(Math.random() * (canvas.height - 60)),
-            size: 55 // 캐릭터가 잘 보이도록 사이즈업
+            size: 55
         };
 
         let players = {};
@@ -473,7 +469,7 @@
         const myRef = ref(db, `players/${myId}`);
         const playersRef = ref(db, 'players');
 
-        // 3분(180초) 잠수 체크 시스템
+        // 3분 잠수 체크
         let lastActivityTime = Date.now();
         const AFK_LIMIT = 3 * 60 * 1000;
 
@@ -491,7 +487,7 @@
             if (isGameStarted && !isAFK && (Date.now() - lastActivityTime > AFK_LIMIT)) {
                 isAFK = true;
                 isGameStarted = false;
-                remove(myRef); // 서버에서 내 캐릭터 삭제
+                remove(myRef); 
                 document.getElementById("lobby-screen").style.display = "none";
                 document.getElementById("game-screen").style.display = "none";
                 document.getElementById("afk-screen").style.display = "flex";
@@ -514,7 +510,6 @@
             myPlayer.nickname = inputVal;
             document.getElementById("profile-nickname").textContent = myPlayer.nickname;
             
-            // 로비 좌측 상단 프로필 이미지 연동
             if(myPlayer.charType === 'char1') {
                 document.getElementById("profile-avatar").src = "./gojo.png";
             } else {
@@ -580,7 +575,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // 타일 바닥 느낌의 그리드
-            ctx.strokeStyle = "#ddd";
+            ctx.strokeStyle = "#e0e0e0"; // 배경이 흰색이므로 선을 약간 어둡게 조절
             ctx.lineWidth = 1;
             for (let x = 0; x < canvas.width; x += 50) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
@@ -594,11 +589,12 @@
                 const p = players[id];
                 const charImg = CHAR_IMAGES[p.charType] || CHAR_IMAGES.char1;
 
-                // 이미지가 로드된 상태면 캔버스에 그림
                 if (charImg && charImg.complete && charImg.naturalWidth !== 0) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = "multiply"; // 💡 여기서 흰색 배경을 투명하게 날려줍니다
                     ctx.drawImage(charImg, p.x, p.y, p.size, p.size);
+                    ctx.restore();
                 } else {
-                    // 이미지 로드 전이거나 실패 시 기본 사각형
                     ctx.fillStyle = id === myId ? "#00ff88" : "#ff4444";
                     ctx.fillRect(p.x, p.y, p.size, p.size);
                 }
@@ -609,7 +605,6 @@
                 const textWidth = ctx.measureText(text).width;
                 ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
                 ctx.fillRect(p.x + p.size / 2 - textWidth / 2 - 4, p.y - 18, textWidth + 8, 16);
-                ctx.border = "1px solid black";
 
                 // 닉네임 텍스트
                 ctx.fillStyle = id === myId ? "#00ff88" : "#ffffff";
