@@ -36,6 +36,84 @@
             font-size: 13px;
         }
 
+        /* 오프닝 / 캐릭터 선택 화면 스타일 */
+        #character-select-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(26, 26, 26, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+
+        #character-select-screen h2 {
+            margin-bottom: 25px;
+            font-size: 22px;
+            color: #ffffff;
+        }
+
+        .char-container {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .char-card {
+            background-color: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 160px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .char-card:hover {
+            transform: translateY(-5px);
+            border-color: #0088ff;
+        }
+
+        .char-img-box {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            background-color: #111;
+        }
+
+        .char-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .select-btn {
+            background-color: #0088ff;
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .select-btn:hover {
+            background-color: #0066cc;
+        }
+
+        /* 게임 메인 UI */
         #game-container {
             position: relative;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
@@ -96,7 +174,7 @@
         import { getDatabase, ref, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
         // ==========================================
-        // 1. Firebase 설정 (제공해주신 값 적용)
+        // 1. Firebase 설정
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyDI2REmsCMwoaaV4xndPZKpX_EUntnCGk4",
@@ -109,43 +187,58 @@
             measurementId: "G-K8JR2FBWBY"
         };
 
-        // Firebase 초기화
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
         // ==========================================
-        // 2. 게임 변수 및 설정
+        // 2. 캐릭터 이미지 로드
+        // ==========================================
+        const CHAR_IMAGES = {
+            char1: new Image(),
+            char2: new Image()
+        };
+
+        CHAR_IMAGES.char1.src = "https://image.zeta-ai.io/profile-image/3ccac6c2-9a72-4105-a1d1-b55e8d0924e4/35e03299-9201-4eea-9323-afac61c9d2ee.jpeg?w=750&q=75&f=webp";
+        CHAR_IMAGES.char2.src = "https://saegchil.co.kr/wp-content/uploads/2022/09/lupi-paiting-saegchil.jpg";
+
+        // ==========================================
+        // 3. 게임 변수 및 초기화
         // ==========================================
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const statusEl = document.getElementById("status");
 
-        // 랜덤 유저 ID 및 색상 생성
         const myId = "user_" + Math.random().toString(36).substring(2, 9);
-        const myColor = '#' + Math.floor(Math.random()*16777215).toString(16);
-
+        
         let myPlayer = {
-            x: Math.floor(Math.random() * (canvas.width - 40)),
-            y: Math.floor(Math.random() * (canvas.height - 40)),
-            color: myColor,
-            size: 30
+            x: Math.floor(Math.random() * (canvas.width - 50)),
+            y: Math.floor(Math.random() * (canvas.height - 50)),
+            charType: "char1", // 기본값
+            size: 45 // 이미지 크기
         };
 
         let players = {};
         const keysPressed = {};
+        let isGameStarted = false;
 
-        // ==========================================
-        // 3. Firebase 데이터 동기화
-        // ==========================================
+        // Firebase 위치 참조
         const myRef = ref(db, `players/${myId}`);
         const playersRef = ref(db, 'players');
 
-        // 내 상태 칠판에 적기
-        set(myRef, myPlayer);
-        // 창을 닫으면 내 데이터 삭제
-        onDisconnect(myRef).remove();
+        // 캐릭터 선택 처리 함수
+        window.selectCharacter = function(selectedChar) {
+            myPlayer.charType = selectedChar;
+            
+            // 데이터베이스에 등록
+            set(myRef, myPlayer);
+            onDisconnect(myRef).remove();
 
-        // 실시간으로 다른 사람 플레이어 위치 받아오기
+            // 선택 창 닫기
+            document.getElementById("character-select-screen").style.display = "none";
+            isGameStarted = true;
+        };
+
+        // 실시간 접속자 업데이트
         onValue(playersRef, (snapshot) => {
             players = snapshot.val() || {};
             const playerCount = Object.keys(players).length;
@@ -153,7 +246,7 @@
         });
 
         // ==========================================
-        // 4. 입력 처리 (PC 키보드 + 모바일 터치)
+        // 4. 입력 처리
         // ==========================================
         window.addEventListener("keydown", (e) => keysPressed[e.key] = true);
         window.addEventListener("keyup", (e) => keysPressed[e.key] = false);
@@ -181,8 +274,9 @@
         bindTouchBtn("btn-left", "ArrowLeft");
         bindTouchBtn("btn-right", "ArrowRight");
 
-        // 위치 업데이트
         function updatePosition() {
+            if (!isGameStarted) return;
+
             const speed = 4;
             let moved = false;
 
@@ -203,7 +297,6 @@
                 moved = true;
             }
 
-            // 움직였을 때만 Firebase 칠판 업데이트
             if (moved) {
                 set(myRef, myPlayer);
             }
@@ -217,7 +310,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 배경 격자그리기
+            // 배경 격자 그리기
             ctx.strokeStyle = "#3a3a3a";
             ctx.lineWidth = 1;
             for (let x = 0; x < canvas.width; x += 40) {
@@ -227,16 +320,24 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // 접속해 있는 유저들 그리기
+            // 플레이어그리기
             Object.keys(players).forEach((id) => {
                 const p = players[id];
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, p.size, p.size);
+                const charImg = CHAR_IMAGES[p.charType || "char1"];
 
-                ctx.strokeStyle = id === myId ? "#ffffff" : "#000000";
+                if (charImg && charImg.complete) {
+                    ctx.drawImage(charImg, p.x, p.y, p.size, p.size);
+                } else {
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+                }
+
+                // 테두리 강조
+                ctx.strokeStyle = id === myId ? "#00ff88" : "#ffffff";
                 ctx.lineWidth = 2;
                 ctx.strokeRect(p.x, p.y, p.size, p.size);
 
+                // 이름 표기
                 ctx.fillStyle = "#ffffff";
                 ctx.font = "12px sans-serif";
                 ctx.textAlign = "center";
@@ -250,6 +351,28 @@
     </script>
 </head>
 <body>
+
+    <!-- 1. 오프닝/캐릭터 선택 모달 화면 -->
+    <div id="character-select-screen">
+        <h2>캐릭터를 선택하세요</h2>
+        <div class="char-container">
+            <div class="char-card">
+                <div class="char-img-box">
+                    <img src="https://image.zeta-ai.io/profile-image/3ccac6c2-9a72-4105-a1d1-b55e8d0924e4/35e03299-9201-4eea-9323-afac61c9d2ee.jpeg?w=750&q=75&f=webp" alt="캐릭터 1">
+                </div>
+                <button class="select-btn" onclick="selectCharacter('char1')">선택</button>
+            </div>
+            
+            <div class="char-card">
+                <div class="char-img-box">
+                    <img src="https://saegchil.co.kr/wp-content/uploads/2022/09/lupi-paiting-saegchil.jpg" alt="캐릭터 2">
+                </div>
+                <button class="select-btn" onclick="selectCharacter('char2')">선택</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 게임 메인 화면 -->
     <h1>2인 실시간 상호작용 공간</h1>
     <p>PC는 방향키, 모바일은 하단 화살표를 누르세요.</p>
     
@@ -266,5 +389,6 @@
         <div class="dpad-btn" id="btn-right">▶</div>
         <div class="dpad-btn" id="btn-down">▼</div>
     </div>
+
 </body>
 </html>
