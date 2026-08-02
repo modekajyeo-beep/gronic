@@ -32,7 +32,7 @@ body {
     z-index: 999;
 }
 
-/* STEP 1: 설정 및 인증 화면 */
+/* STEP 1: PIN 입력 접속 화면 */
 #setup-screen {
     background-image: url('./bg.png');
     background-size: cover;
@@ -56,39 +56,15 @@ body {
 
 #login-box h2 {
     margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 22px;
+    margin-bottom: 12px;
+    font-size: 20px;
     color: #00ff88;
     letter-spacing: 1px;
 }
 
-.auth-tabs {
-    display: flex;
-    width: 100%;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.auth-tab-btn {
-    flex: 1;
-    padding: 10px;
-    background: #2a2a2a;
-    color: #888;
-    border: 1px solid #444;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.auth-tab-btn.active {
-    background: #00ff88;
-    color: #000;
-    border-color: #00ff88;
-}
-
 .input-group {
     width: 100%;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
 }
 
 .input-group label {
@@ -220,7 +196,6 @@ body {
     color: #ffffff;
 }
 
-/* 경험치 게이지 바 */
 .exp-bar-container {
     position: relative;
     width: 150px;
@@ -285,9 +260,6 @@ body {
     width: 90%;
     max-width: 500px;
 }
-
-.pin-box { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
-.pin-input { width: 180px; padding: 10px; font-size: 22px; text-align: center; letter-spacing: 10px; border-radius: 8px; border: 2px solid #00ff88; background-color: #111; color: #00ff88; outline: none; }
 
 .date-picker-group { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; width: 100%; justify-content: center; }
 .date-input { background-color: #111; color: #00ff88; border: 1px solid #00ff88; padding: 6px 10px; border-radius: 6px; font-size: 14px; font-weight: bold; }
