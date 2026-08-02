@@ -44,7 +44,7 @@
             z-index: 999;
         }
 
-        /* STEP 1: 로그인(설정) 화면 */
+        /* STEP 1: 설정 화면 */
         #setup-screen {
             background-image: url('./bg.png');
             background-size: cover;
@@ -254,7 +254,7 @@
             background-color: #0066cc;
         }
 
-        /* ★ 추가된 CSS: 헬스 기록 보관함 스타일 ★ */
+        /* 헬스 기록 보관함 스타일 (4자리 PIN & 날짜 선택 기능) */
         #record-box {
             background-color: rgba(25, 25, 25, 0.95);
             padding: 30px;
@@ -265,20 +265,68 @@
             align-items: center;
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
             width: 90%;
-            max-width: 500px;
+            max-width: 520px;
         }
 
         #record-box h2 {
             margin-top: 0;
             color: #00ff88;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        .pin-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .pin-input {
+            width: 200px;
+            padding: 12px;
             font-size: 24px;
-            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 12px;
+            border-radius: 10px;
+            border: 2px solid #00ff88;
+            background-color: #111;
+            color: #00ff88;
+            outline: none;
+        }
+
+        .date-picker-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .date-picker-group label {
+            font-size: 14px;
+            color: #aaa;
+            font-weight: bold;
+        }
+
+        .date-input {
+            background-color: #111;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            outline: none;
+            cursor: pointer;
         }
 
         .tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             width: 100%;
         }
 
@@ -302,7 +350,7 @@
 
         #record-textarea {
             width: 100%;
-            height: 200px;
+            height: 180px;
             background-color: #111;
             color: #fff;
             border: 1px solid #444;
@@ -312,7 +360,6 @@
             resize: none;
             outline: none;
             margin-bottom: 20px;
-            /* 텍스트 드래그 선택 허용 */
             user-select: text;
             -webkit-user-select: text;
         }
@@ -323,7 +370,7 @@
 
         .record-actions {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             width: 100%;
         }
         
@@ -479,30 +526,57 @@
         </div>
 
         <div class="lobby-menu">
-            <!-- ★ 헬스 기록 보관함 버튼 추가 ★ -->
             <button class="action-btn" onclick="openRecordBox()">💪 헬스 기록 보관함</button>
             <button class="action-btn" onclick="alert('꾸미기 기능은 추후 업데이트 될 예정입니다!')">🎨 캐릭터 꾸미기 (준비중)</button>
             <button class="action-btn start-btn" onclick="enterGame()">🎮 게임 공간 입장하기</button>
         </div>
     </div>
 
-    <!-- ★ 추가된 HTML: 헬스 기록 보관함 화면 ★ -->
+    <!-- 헬스 기록 보관함 화면 (PIN 잠금 + 날짜 선택 기능) -->
     <div id="record-screen" class="overlay-screen" style="display: none; background-color: rgba(10, 10, 10, 0.95); z-index: 9999;">
         <div id="record-box">
-            <h2>💪 헬스 기록 보관함</h2>
-            <div class="tabs">
-                <button class="tab-btn active" id="tab-arm" onclick="changeTab('arm')">팔</button>
-                <button class="tab-btn" id="tab-back" onclick="changeTab('back')">등</button>
-                <button class="tab-btn" id="tab-leg" onclick="changeTab('leg')">하체</button>
-                <button class="tab-btn" id="tab-shoulder" onclick="changeTab('shoulder')">어깨</button>
-            </div>
-            <!-- 입력창 -->
-            <textarea id="record-textarea" placeholder="여기에 오늘의 득근 기록을 작성하세요!&#13;&#10;예) 벤치프레스 100kg 5x5"></textarea>
             
-            <div class="record-actions">
-                <button class="primary-btn" onclick="saveRecord()">저장하기</button>
-                <button class="primary-btn close-btn" onclick="closeRecordBox()">닫기</button>
+            <!-- 🔑 1단계: 비밀번호 4자리 입력 화면 -->
+            <div id="pin-view" class="pin-box">
+                <h2>🔒 개인 보관함 4자리 비밀코드</h2>
+                <p style="color:#aaa; font-size:14px; margin:0 0 10px 0;">나만의 비밀 4자리 코드를 입력하세요!</p>
+                <input type="password" id="pin-input-field" class="pin-input" maxlength="4" placeholder="••••" onkeyup="if(event.key==='Enter') unlockRecordBox()">
+                <div class="record-actions" style="margin-top: 15px;">
+                    <button class="primary-btn" onclick="unlockRecordBox()">보관함 열기</button>
+                    <button class="primary-btn close-btn" onclick="closeRecordBox()">닫기</button>
+                </div>
             </div>
+
+            <!-- 📝 2단계: 헬스 기록 메인 화면 (날짜 + 부위별) -->
+            <div id="main-record-view" style="display: none; width: 100%;">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:10px;">
+                    <h2 style="margin:0;">💪 헬스 기록 보관함</h2>
+                    <span id="active-pin-tag" style="color:#00ff88; font-weight:bold; font-size:13px; background:#222; padding:4px 8px; border-radius:6px; border:1px solid #00ff88;">코드: ****</span>
+                </div>
+
+                <!-- 📅 날짜 선택기 -->
+                <div class="date-picker-group">
+                    <label for="workout-date">📅 기록 날짜:</label>
+                    <input type="date" id="workout-date" class="date-input" onchange="onDateOrTabChange()">
+                </div>
+
+                <!-- 부위별 탭 -->
+                <div class="tabs">
+                    <button class="tab-btn active" id="tab-arm" onclick="changeTab('arm')">팔</button>
+                    <button class="tab-btn" id="tab-back" onclick="changeTab('back')">등</button>
+                    <button class="tab-btn" id="tab-leg" onclick="changeTab('leg')">하체</button>
+                    <button class="tab-btn" id="tab-shoulder" onclick="changeTab('shoulder')">어깨</button>
+                </div>
+
+                <!-- 기록 작성 영역 -->
+                <textarea id="record-textarea" placeholder="선택한 날짜의 득근 기록을 작성하세요!&#13;&#10;예) 덤벨 숄더 프레스 20kg 4세트"></textarea>
+                
+                <div class="record-actions">
+                    <button class="primary-btn" onclick="saveRecord()">저장하기</button>
+                    <button class="primary-btn close-btn" onclick="closeRecordBox()">닫기</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -527,7 +601,7 @@
     <!-- Firebase 및 게임 스크립트 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, set, remove, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getDatabase, ref, set, get, remove, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDI2REmsCMwoaaV4xndPZKpX_EUntnCGk4",
@@ -634,37 +708,101 @@
             resetActivityTime();
         };
 
-        // ★ 추가된 자바스크립트: 헬스 기록 보관함 로직 ★
-        let currentRecordTab = 'arm'; // 기본 탭은 팔
+        // 🔥 4자리 비밀코드 & 날짜별 헬스 보관함 로직 🔥
+        let userPin = "";
+        let currentRecordTab = 'arm';
+
+        // 오늘 날짜 기본 세팅 (YYYY-MM-DD 형식)
+        const todayStr = new Date().toISOString().split('T')[0];
 
         window.openRecordBox = function() {
             document.getElementById("record-screen").style.display = "flex";
-            window.changeTab(currentRecordTab); // 열 때 현재 탭 내용 불러오기
+            
+            // 비밀번호를 이미 입력했었다면 메인 화면으로, 아니면 PIN 입력창으로
+            if(userPin && userPin.length === 4) {
+                document.getElementById("pin-view").style.display = "none";
+                document.getElementById("main-record-view").style.display = "block";
+                window.onDateOrTabChange();
+            } else {
+                document.getElementById("pin-view").style.display = "flex";
+                document.getElementById("main-record-view").style.display = "none";
+                document.getElementById("pin-input-field").value = "";
+                document.getElementById("pin-input-field").focus();
+            }
         };
 
         window.closeRecordBox = function() {
             document.getElementById("record-screen").style.display = "none";
         };
 
+        // 🔑 4자리 PIN 확인 후 보관함 잠금 해제
+        window.unlockRecordBox = function() {
+            const pinVal = document.getElementById("pin-input-field").value.trim();
+            if(pinVal.length !== 4 || isNaN(pinVal)) {
+                alert("숫자 4자리를 정확히 입력해 주세요!");
+                return;
+            }
+
+            userPin = pinVal;
+            document.getElementById("active-pin-tag").textContent = `코드: ${userPin}`;
+            document.getElementById("workout-date").value = todayStr; // 오늘 날짜 기본 세팅
+
+            document.getElementById("pin-view").style.display = "none";
+            document.getElementById("main-record-view").style.display = "block";
+
+            window.onDateOrTabChange();
+        };
+
+        // 탭 변경
         window.changeTab = function(tabName) {
             currentRecordTab = tabName;
-            
-            // 모든 탭 버튼 색상 초기화 및 선택된 탭 하이라이트
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById('tab-' + tabName).classList.add('active');
-
-            // 브라우저 저장소(localStorage)에서 기존에 쓴 글 불러오기
-            const savedText = localStorage.getItem('workout_record_' + tabName);
-            document.getElementById("record-textarea").value = savedText ? savedText : "";
+            window.onDateOrTabChange();
         };
 
+        // 날짜나 탭이 바뀌었을 때 서버에서 데이터 가져오기
+        window.onDateOrTabChange = function() {
+            const selectedDate = document.getElementById("workout-date").value;
+            if(!selectedDate) return;
+
+            const textarea = document.getElementById("record-textarea");
+            textarea.value = "기록 불러오는 중...";
+
+            // 파이어베이스 경로: workoutRecords / 비밀코드(4자리) / 날짜 / 운동부위
+            const recordRef = ref(db, `workoutRecords/PIN_${userPin}/${selectedDate}/${currentRecordTab}`);
+            
+            get(recordRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    textarea.value = snapshot.val();
+                } else {
+                    textarea.value = ""; // 기록 없으면 빈 칸
+                }
+            }).catch((error) => {
+                console.error("기록 불러오기 실패:", error);
+                textarea.value = "";
+            });
+        };
+
+        // 기록 저장하기
         window.saveRecord = function() {
+            const selectedDate = document.getElementById("workout-date").value;
+            if(!selectedDate) {
+                alert("날짜를 선택해주세요!");
+                return;
+            }
+
             const currentText = document.getElementById("record-textarea").value;
-            // 브라우저 저장소(localStorage)에 저장
-            localStorage.setItem('workout_record_' + currentRecordTab, currentText);
-            alert("💪 기록이 성공적으로 저장되었습니다!");
+            const recordRef = ref(db, `workoutRecords/PIN_${userPin}/${selectedDate}/${currentRecordTab}`);
+
+            set(recordRef, currentText)
+                .then(() => {
+                    alert(`💪 [${selectedDate}] 기록이 서버에 안전하게 저장되었습니다!`);
+                })
+                .catch((error) => {
+                    alert("저장 실패: " + error.message);
+                });
         };
-        // ===============================================
 
         onValue(playersRef, (snapshot) => {
             players = snapshot.val() || {};
@@ -709,7 +847,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 타일 바닥 느낌의 그리드
+            // 타일 바닥 그리드
             ctx.strokeStyle = "#e0e0e0"; 
             ctx.lineWidth = 1;
             for (let x = 0; x < canvas.width; x += 50) {
@@ -734,14 +872,14 @@
                     ctx.fillRect(p.x, p.y, p.size, p.size);
                 }
 
-                // 닉네임 텍스트 배경 (가독성 향상)
+                // 닉네임 배경
                 const text = p.nickname || "익명";
                 ctx.font = "bold 13px 'Segoe UI', sans-serif";
                 const textWidth = ctx.measureText(text).width;
                 ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
                 ctx.fillRect(p.x + p.size / 2 - textWidth / 2 - 4, p.y - 18, textWidth + 8, 16);
 
-                // 닉네임 텍스트
+                // 닉네임
                 ctx.fillStyle = id === myId ? "#00ff88" : "#ffffff";
                 ctx.textAlign = "center";
                 ctx.fillText(text, p.x + p.size / 2, p.y - 6);
