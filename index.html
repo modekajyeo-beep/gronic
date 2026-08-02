@@ -7,7 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>2인 실시간 멀티플레이어 게임</title>
+    <title>실시간 멀티플레이어 게임</title>
     
     <!-- ========================================== -->
     <!-- 1. CSS 스타일 (디자인)                     -->
@@ -31,11 +31,6 @@
             justify-content: center;
             min-height: 100vh;
             touch-action: manipulation;
-        }
-
-        h1 {
-            margin: 0 0 4px 0;
-            font-size: 20px;
         }
 
         p {
@@ -203,7 +198,6 @@
     </div>
 
     <!-- 2-2. 게임 메인 화면 -->
-    <h1>2인 실시간 상호작용 공간</h1>
     <p>PC는 방향키, 모바일은 하단 화살표를 누르세요.</p>
     
     <div id="game-container">
@@ -276,6 +270,7 @@
         window.selectCharacter = function(selectedChar) {
             myPlayer.charType = selectedChar;
             
+            // 데이터베이스에 접속 정보 저장
             set(myRef, myPlayer);
             onDisconnect(myRef).remove();
 
@@ -348,7 +343,8 @@
             // 플레이어 그리기
             Object.keys(players).forEach((id) => {
                 const p = players[id];
-                const charImg = CHAR_IMAGES[p.charType || "char1"];
+                // 각 유저가 고른 charType을 기반으로 이미지를 다르게 불러옵니다.
+                const charImg = CHAR_IMAGES[p.charType] || CHAR_IMAGES.char1;
 
                 if (charImg && charImg.complete) {
                     ctx.drawImage(charImg, p.x, p.y, p.size, p.size);
