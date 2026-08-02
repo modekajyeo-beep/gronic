@@ -130,7 +130,6 @@
             background-color: rgba(0, 255, 136, 0.05);
         }
 
-        /* 흰색 배경 투명화(Multiply) 적용을 위해 박스 배경을 흰색으로 변경 */
         .char-img-box {
             width: 80px;
             height: 80px;
@@ -142,7 +141,6 @@
             background-color: #ffffff; 
         }
 
-        /* HTML 이미지에 multiply 꼼수 적용 */
         .char-img-box img {
             width: 100%;
             height: 100%;
@@ -203,7 +201,7 @@
             border: 2px solid #00ff88;
             object-fit: contain;
             background-color: #ffffff;
-            mix-blend-mode: normal; /* 로비 아바타는 테두리가 있어서 투명화 제외 */
+            mix-blend-mode: normal; 
         }
 
         #profile-info {
@@ -256,6 +254,90 @@
             background-color: #0066cc;
         }
 
+        /* ★ 추가된 CSS: 헬스 기록 보관함 스타일 ★ */
+        #record-box {
+            background-color: rgba(25, 25, 25, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            border: 2px solid #00ff88;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        #record-box h2 {
+            margin-top: 0;
+            color: #00ff88;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background-color: #333;
+            color: #aaa;
+            border: 1px solid #555;
+            padding: 10px 0;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background-color: #00ff88;
+            color: #000;
+            border-color: #00ff88;
+        }
+
+        #record-textarea {
+            width: 100%;
+            height: 200px;
+            background-color: #111;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 15px;
+            resize: none;
+            outline: none;
+            margin-bottom: 20px;
+            /* 텍스트 드래그 선택 허용 */
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        #record-textarea:focus {
+            border-color: #00ff88;
+        }
+
+        .record-actions {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .record-actions .primary-btn {
+            flex: 1;
+        }
+
+        .close-btn {
+            background-color: #ff4444;
+        }
+        .close-btn:hover {
+            background-color: #cc0000;
+        }
+
         /* STEP 3: 인게임 화면 */
         #game-screen {
             display: none;
@@ -269,7 +351,6 @@
             border-radius: 12px;
             overflow: hidden;
             max-width: 100%;
-            /* 캔버스 꼼수를 위해 배경을 완전 흰색으로 세팅 */
             background-color: #ffffff; 
             border: 4px solid #333;
         }
@@ -398,8 +479,30 @@
         </div>
 
         <div class="lobby-menu">
+            <!-- ★ 헬스 기록 보관함 버튼 추가 ★ -->
+            <button class="action-btn" onclick="openRecordBox()">💪 헬스 기록 보관함</button>
             <button class="action-btn" onclick="alert('꾸미기 기능은 추후 업데이트 될 예정입니다!')">🎨 캐릭터 꾸미기 (준비중)</button>
             <button class="action-btn start-btn" onclick="enterGame()">🎮 게임 공간 입장하기</button>
+        </div>
+    </div>
+
+    <!-- ★ 추가된 HTML: 헬스 기록 보관함 화면 ★ -->
+    <div id="record-screen" class="overlay-screen" style="display: none; background-color: rgba(10, 10, 10, 0.95); z-index: 9999;">
+        <div id="record-box">
+            <h2>💪 헬스 기록 보관함</h2>
+            <div class="tabs">
+                <button class="tab-btn active" id="tab-arm" onclick="changeTab('arm')">팔</button>
+                <button class="tab-btn" id="tab-back" onclick="changeTab('back')">등</button>
+                <button class="tab-btn" id="tab-leg" onclick="changeTab('leg')">하체</button>
+                <button class="tab-btn" id="tab-shoulder" onclick="changeTab('shoulder')">어깨</button>
+            </div>
+            <!-- 입력창 -->
+            <textarea id="record-textarea" placeholder="여기에 오늘의 득근 기록을 작성하세요!&#13;&#10;예) 벤치프레스 100kg 5x5"></textarea>
+            
+            <div class="record-actions">
+                <button class="primary-btn" onclick="saveRecord()">저장하기</button>
+                <button class="primary-btn close-btn" onclick="closeRecordBox()">닫기</button>
+            </div>
         </div>
     </div>
 
@@ -531,6 +634,38 @@
             resetActivityTime();
         };
 
+        // ★ 추가된 자바스크립트: 헬스 기록 보관함 로직 ★
+        let currentRecordTab = 'arm'; // 기본 탭은 팔
+
+        window.openRecordBox = function() {
+            document.getElementById("record-screen").style.display = "flex";
+            window.changeTab(currentRecordTab); // 열 때 현재 탭 내용 불러오기
+        };
+
+        window.closeRecordBox = function() {
+            document.getElementById("record-screen").style.display = "none";
+        };
+
+        window.changeTab = function(tabName) {
+            currentRecordTab = tabName;
+            
+            // 모든 탭 버튼 색상 초기화 및 선택된 탭 하이라이트
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // 브라우저 저장소(localStorage)에서 기존에 쓴 글 불러오기
+            const savedText = localStorage.getItem('workout_record_' + tabName);
+            document.getElementById("record-textarea").value = savedText ? savedText : "";
+        };
+
+        window.saveRecord = function() {
+            const currentText = document.getElementById("record-textarea").value;
+            // 브라우저 저장소(localStorage)에 저장
+            localStorage.setItem('workout_record_' + currentRecordTab, currentText);
+            alert("💪 기록이 성공적으로 저장되었습니다!");
+        };
+        // ===============================================
+
         onValue(playersRef, (snapshot) => {
             players = snapshot.val() || {};
             statusEl.textContent = `현재 서버 인원: ${Object.keys(players).length}명 접속 중`;
@@ -575,7 +710,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // 타일 바닥 느낌의 그리드
-            ctx.strokeStyle = "#e0e0e0"; // 배경이 흰색이므로 선을 약간 어둡게 조절
+            ctx.strokeStyle = "#e0e0e0"; 
             ctx.lineWidth = 1;
             for (let x = 0; x < canvas.width; x += 50) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
@@ -591,7 +726,7 @@
 
                 if (charImg && charImg.complete && charImg.naturalWidth !== 0) {
                     ctx.save();
-                    ctx.globalCompositeOperation = "multiply"; // 💡 여기서 흰색 배경을 투명하게 날려줍니다
+                    ctx.globalCompositeOperation = "multiply"; 
                     ctx.drawImage(charImg, p.x, p.y, p.size, p.size);
                     ctx.restore();
                 } else {
