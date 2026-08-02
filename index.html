@@ -21,7 +21,7 @@
 
         body {
             margin: 0;
-            padding: 10px;
+            padding: 0;
             background-color: #1a1a1a;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -31,16 +31,13 @@
             justify-content: center;
             min-height: 100vh;
             touch-action: manipulation;
+            overflow: hidden;
         }
 
-        p {
-            margin: 0 0 12px 0;
-            color: #aaaaaa;
-            font-size: 13px;
-        }
-
-        /* 오프닝 / 캐릭터 선택 화면 스타일 */
-        #character-select-screen {
+        /* ---------------------------------- */
+        /* 공통 팝업 및 모달 화면             */
+        /* ---------------------------------- */
+        .overlay-screen {
             position: fixed;
             top: 0;
             left: 0;
@@ -54,43 +51,87 @@
             z-index: 999;
         }
 
-        #character-select-screen h2 {
-            margin-bottom: 25px;
-            font-size: 22px;
-            color: #ffffff;
+        /* 1단계: 닉네임 & 캐릭터 선택 */
+        #login-box {
+            background-color: #2a2a2a;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            max-width: 90%;
+            width: 380px;
+        }
+
+        #login-box h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 20px;
+            color: #00ff88;
+        }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #555;
+            background-color: #111;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #0088ff;
         }
 
         .char-container {
             display: flex;
-            gap: 25px;
-            flex-wrap: wrap;
+            gap: 15px;
             justify-content: center;
+            width: 100%;
+            margin-bottom: 20px;
         }
 
         .char-card {
-            background-color: #2a2a2a;
+            background-color: #111;
             border: 2px solid #444;
-            border-radius: 12px;
-            padding: 15px;
+            border-radius: 10px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 160px;
+            width: 110px;
+            cursor: pointer;
             transition: transform 0.2s, border-color 0.2s;
         }
 
-        .char-card:hover {
-            transform: translateY(-5px);
-            border-color: #0088ff;
+        .char-card.selected {
+            border-color: #00ff88;
+            transform: scale(1.05);
         }
 
         .char-img-box {
-            width: 120px;
-            height: 120px;
-            border-radius: 8px;
+            width: 80px;
+            height: 80px;
+            border-radius: 6px;
             overflow: hidden;
-            margin-bottom: 15px;
-            background-color: #111;
+            margin-bottom: 8px;
+            background-color: #000;
         }
 
         .char-img-box img {
@@ -99,24 +140,147 @@
             object-fit: cover;
         }
 
-        .select-btn {
+        .primary-btn {
             background-color: #0088ff;
             color: white;
             border: none;
-            padding: 8px 18px;
-            font-size: 14px;
+            padding: 12px 24px;
+            font-size: 15px;
             font-weight: bold;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             width: 100%;
-            transition: background-color 0.2s;
+            transition: background-color 0.2s, transform 0.1s;
         }
 
-        .select-btn:hover {
+        .primary-btn:hover { background-color: #0066cc; }
+        .primary-btn:active { transform: scale(0.98); }
+
+        /* 2단계: 메인 로비 / 대기실 (인터페이스) */
+        #lobby-screen {
+            display: none;
+        }
+
+        /* 좌측 상단 프로필 구조 */
+        #user-profile-bar {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 18px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        #profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #00ff88;
+            object-fit: cover;
+        }
+
+        #profile-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #profile-nickname {
+            font-weight: bold;
+            font-size: 16px;
+            color: #ffffff;
+        }
+
+        #profile-status {
+            font-size: 12px;
+            color: #00ff88;
+        }
+
+        /* 중앙 메뉴 상자 */
+        .lobby-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 280px;
+        }
+
+        .action-btn {
+            background-color: #333;
+            color: #fff;
+            border: 2px solid #555;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: #00ff88;
+            background-color: #444;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.start-btn {
+            background-color: #0088ff;
+            border-color: #00aaff;
+        }
+        .action-btn.start-btn:hover {
             background-color: #0066cc;
         }
 
-        /* 게임 메인 UI */
+        /* 꾸미기 팝업 창 */
+        #customize-modal {
+            display: none;
+        }
+
+        .modal-box {
+            background-color: #222;
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid #444;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .color-picker-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .color-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+
+        .color-dot:hover { transform: scale(1.1); }
+        .color-dot.selected { border-color: #ffffff; }
+
+        /* ---------------------------------- */
+        /* 3단계: 실제 게임 화면              */
+        /* ---------------------------------- */
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
         #game-container {
             position: relative;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
@@ -140,7 +304,6 @@
             font-size: 13px;
         }
 
-        /* 모바일 터치 컨트롤러 */
         #dpad {
             margin-top: 15px;
             display: grid;
@@ -161,9 +324,7 @@
             touch-action: none;
         }
 
-        .dpad-btn:active {
-            background-color: #666;
-        }
+        .dpad-btn:active { background-color: #666; }
 
         #btn-up { grid-column: 2; grid-row: 1; }
         #btn-left { grid-column: 1; grid-row: 2; }
@@ -174,48 +335,101 @@
 <body>
 
     <!-- ========================================== -->
-    <!-- 2. HTML 화면 구조                          -->
+    <!-- STEP 1: 닉네임 입력 & 캐릭터 기본 선택 창 -->
     <!-- ========================================== -->
-    
-    <!-- 2-1. 오프닝 / 캐릭터 선택 화면 -->
-    <div id="character-select-screen">
-        <h2>캐릭터를 선택하세요</h2>
-        <div class="char-container">
-            <div class="char-card">
-                <div class="char-img-box">
-                    <img src="https://image.zeta-ai.io/profile-image/3ccac6c2-9a72-4105-a1d1-b55e8d0924e4/35e03299-9201-4eea-9323-afac61c9d2ee.jpeg?w=750&q=75&f=webp" alt="캐릭터 1">
-                </div>
-                <button class="select-btn" onclick="selectCharacter('char1')">선택</button>
-            </div>
+    <div id="setup-screen" class="overlay-screen">
+        <div id="login-box">
+            <h2>프로필 설정</h2>
             
-            <div class="char-card">
-                <div class="char-img-box">
-                    <img src="https://saegchil.co.kr/wp-content/uploads/2022/09/lupi-paiting-saegchil.jpg" alt="캐릭터 2">
-                </div>
-                <button class="select-btn" onclick="selectCharacter('char2')">선택</button>
+            <div class="input-group">
+                <label for="nickname-input">닉네임을 입력하세요</label>
+                <input type="text" id="nickname-input" placeholder="최대 8자 입력..." maxlength="8">
             </div>
+
+            <div class="input-group">
+                <label>캐릭터 선택</label>
+                <div class="char-container">
+                    <div class="char-card selected" id="card-char1" onclick="selectInitialChar('char1')">
+                        <div class="char-img-box">
+                            <img src="https://image.zeta-ai.io/profile-image/3ccac6c2-9a72-4105-a1d1-b55e8d0924e4/35e03299-9201-4eea-9323-afac61c9d2ee.jpeg?w=750&q=75&f=webp" alt="캐릭터 1">
+                        </div>
+                        <span style="font-size:12px;">캐릭터 A</span>
+                    </div>
+                    
+                    <div class="char-card" id="card-char2" onclick="selectInitialChar('char2')">
+                        <div class="char-img-box">
+                            <img src="https://saegchil.co.kr/wp-content/uploads/2022/09/lupi-paiting-saegchil.jpg" alt="캐릭터 2">
+                        </div>
+                        <span style="font-size:12px;">캐릭터 B</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="primary-btn" onclick="confirmSetup()">설정 완료 및 로비 이동</button>
         </div>
     </div>
 
-    <!-- 2-2. 게임 메인 화면 -->
-    <p>PC는 방향키, 모바일은 하단 화살표를 누르세요.</p>
-    
-    <div id="game-container">
-        <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <!-- ========================================== -->
+    <!-- STEP 2: 대기실 / 꾸미기 인터페이스 (HUB)  -->
+    <!-- ========================================== -->
+    <div id="lobby-screen" class="overlay-screen">
+        <!-- 좌측 상단 내 프로필 표시 시스템 -->
+        <div id="user-profile-bar">
+            <img id="profile-avatar" src="" alt="내 프로필">
+            <div id="profile-info">
+                <span id="profile-nickname">닉네임</span>
+                <span id="profile-status">● 대기 중</span>
+            </div>
+        </div>
+
+        <!-- 메인 메뉴 버튼들 -->
+        <div class="lobby-menu">
+            <button class="action-btn" onclick="openCustomizeModal()">🎨 캐릭터 꾸미기</button>
+            <button class="action-btn start-btn" onclick="enterGame()">🎮 게임 공간 입장하기</button>
+        </div>
     </div>
 
-    <div id="status">연결 중...</div>
+    <!-- 캐릭터 꾸미기 모달 (팝업창) -->
+    <div id="customize-modal" class="overlay-screen" style="background: rgba(0,0,0,0.8);">
+        <div class="modal-box">
+            <h3>테두리(아우라) 색상 선택</h3>
+            <p style="font-size: 13px; color:#aaa; margin: 0;">게임 내 내 캐릭터 테두리 빛을 바꿉니다.</p>
+            
+            <div class="color-picker-group">
+                <div class="color-dot selected" style="background:#00ff88;" onclick="setAuraColor('#00ff88', this)"></div>
+                <div class="color-dot" style="background:#ff0055;" onclick="setAuraColor('#ff0055', this)"></div>
+                <div class="color-dot" style="background:#00aaff;" onclick="setAuraColor('#00aaff', this)"></div>
+                <div class="color-dot" style="background:#ffcc00;" onclick="setAuraColor('#ffcc00', this)"></div>
+                <div class="color-dot" style="background:#aa00ff;" onclick="setAuraColor('#aa00ff', this)"></div>
+            </div>
 
-    <!-- 모바일 터치 컨트롤러 -->
-    <div id="dpad">
-        <div class="dpad-btn" id="btn-up">▲</div>
-        <div class="dpad-btn" id="btn-left">◀</div>
-        <div class="dpad-btn" id="btn-right">▶</div>
-        <div class="dpad-btn" id="btn-down">▼</div>
+            <button class="primary-btn" onclick="closeCustomizeModal()" style="margin-top: 10px;">저장하기</button>
+        </div>
     </div>
 
     <!-- ========================================== -->
-    <!-- 3. JavaScript 게임 스크립트 (기능 및 로직)  -->
+    <!-- STEP 3: 실제 게임 화면                    -->
+    <!-- ========================================== -->
+    <div id="game-screen">
+        <p style="margin: 0 0 10px 0; color: #aaa; font-size: 13px;">PC는 방향키, 모바일은 하단 화살표를 누르세요.</p>
+        
+        <div id="game-container">
+            <canvas id="gameCanvas" width="600" height="400"></canvas>
+        </div>
+
+        <div id="status">연결 중...</div>
+
+        <!-- 모바일 터치 컨트롤러 -->
+        <div id="dpad">
+            <div class="dpad-btn" id="btn-up">▲</div>
+            <div class="dpad-btn" id="btn-left">◀</div>
+            <div class="dpad-btn" id="btn-right">▶</div>
+            <div class="dpad-btn" id="btn-down">▼</div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JavaScript 게임 스크립트                   -->
     <!-- ========================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -236,16 +450,20 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 캐릭터 이미지 로드
+        // 이미지 경로 데이터
+        const CHAR_SRC = {
+            char1: "https://image.zeta-ai.io/profile-image/3ccac6c2-9a72-4105-a1d1-b55e8d0924e4/35e03299-9201-4eea-9323-afac61c9d2ee.jpeg?w=750&q=75&f=webp",
+            char2: "https://saegchil.co.kr/wp-content/uploads/2022/09/lupi-paiting-saegchil.jpg"
+        };
+
         const CHAR_IMAGES = {
             char1: new Image(),
             char2: new Image()
         };
+        CHAR_IMAGES.char1.src = CHAR_SRC.char1;
+        CHAR_IMAGES.char2.src = CHAR_SRC.char2;
 
-        CHAR_IMAGES.char1.src = "https://image.zeta-ai.io/profile-image/3ccac6c2-9a72-4105-a1d1-b55e8d0924e4/35e03299-9201-4eea-9323-afac61c9d2ee.jpeg?w=750&q=75&f=webp";
-        CHAR_IMAGES.char2.src = "https://saegchil.co.kr/wp-content/uploads/2022/09/lupi-paiting-saegchil.jpg";
-
-        // 게임 변수
+        // 내 정보 설정
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const statusEl = document.getElementById("status");
@@ -253,9 +471,11 @@
         const myId = "user_" + Math.random().toString(36).substring(2, 9);
 
         let myPlayer = {
+            nickname: "익명",
+            charType: "char1",
+            auraColor: "#00ff88",
             x: Math.floor(Math.random() * (canvas.width - 50)),
             y: Math.floor(Math.random() * (canvas.height - 50)),
-            charType: "char1",
             size: 45
         };
 
@@ -266,26 +486,72 @@
         const myRef = ref(db, `players/${myId}`);
         const playersRef = ref(db, 'players');
 
-        // 캐릭터 선택 처리
-        window.selectCharacter = function(selectedChar) {
-            myPlayer.charType = selectedChar;
-            
-            // 데이터베이스에 접속 정보 저장
+        // ------------------------------------------
+        // UI 로직 (오프닝 & 로비 인터페이스)
+        // ------------------------------------------
+        
+        // 1. 초기 캐릭터 선택 함수
+        window.selectInitialChar = function(charType) {
+            myPlayer.charType = charType;
+            document.querySelectorAll('.char-card').forEach(card => card.classList.remove('selected'));
+            document.getElementById(`card-${charType}`).classList.add('selected');
+        };
+
+        // 2. 초기 프로필 입력 확정
+        window.confirmSetup = function() {
+            const inputVal = document.getElementById("nickname-input").value.trim();
+            if (!inputVal) {
+                alert("닉네임을 입력해 주세요!");
+                return;
+            }
+
+            myPlayer.nickname = inputVal;
+
+            // 좌측 상단 프로필 화면 업데이트
+            document.getElementById("profile-nickname").textContent = myPlayer.nickname;
+            document.getElementById("profile-avatar").src = CHAR_SRC[myPlayer.charType];
+
+            // 화면 전환 (설정창 -> 로비 대기실)
+            document.getElementById("setup-screen").style.display = "none";
+            document.getElementById("lobby-screen").style.display = "flex";
+        };
+
+        // 3. 꾸미기 팝업 창 열기 / 닫기
+        window.openCustomizeModal = function() {
+            document.getElementById("customize-modal").style.display = "flex";
+        };
+
+        window.closeCustomizeModal = function() {
+            document.getElementById("customize-modal").style.display = "none";
+        };
+
+        // 4. 꾸미기 아우라 색상 선택
+        window.setAuraColor = function(color, element) {
+            myPlayer.auraColor = color;
+            document.querySelectorAll('.color-dot').forEach(dot => dot.classList.remove('selected'));
+            element.classList.add('selected');
+        };
+
+        // 5. 게임 최종 입장
+        window.enterGame = function() {
+            document.getElementById("lobby-screen").style.display = "none";
+            document.getElementById("game-screen").style.display = "flex";
+
+            // DB 저장 및 게임 루프 가동
             set(myRef, myPlayer);
             onDisconnect(myRef).remove();
-
-            document.getElementById("character-select-screen").style.display = "none";
             isGameStarted = true;
         };
 
-        // 실시간 접속자 업데이트
+        // ------------------------------------------
+        // 게임 컨트롤 & 렌더링 로직
+        // ------------------------------------------
         onValue(playersRef, (snapshot) => {
             players = snapshot.val() || {};
             const playerCount = Object.keys(players).length;
-            statusEl.textContent = `현재 접속자: ${playerCount}명 (내 ID: ${myId.substring(0, 6)})`;
+            statusEl.textContent = `현재 접속자: ${playerCount}명`;
         });
 
-        // 키 입력 처리
         window.addEventListener("keydown", (e) => keysPressed[e.key] = true);
         window.addEventListener("keyup", (e) => keysPressed[e.key] = false);
 
@@ -324,13 +590,12 @@
             }
         }
 
-        // 렌더링
         function draw() {
             updatePosition();
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 격자 배경
+            // 배경 격자
             ctx.strokeStyle = "#3a3a3a";
             ctx.lineWidth = 1;
             for (let x = 0; x < canvas.width; x += 40) {
@@ -340,12 +605,12 @@
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // 플레이어 그리기
+            // 모든 플레이어 렌더링
             Object.keys(players).forEach((id) => {
                 const p = players[id];
-                // 각 유저가 고른 charType을 기반으로 이미지를 다르게 불러옵니다.
                 const charImg = CHAR_IMAGES[p.charType] || CHAR_IMAGES.char1;
 
+                // 캐릭터 그리개
                 if (charImg && charImg.complete) {
                     ctx.drawImage(charImg, p.x, p.y, p.size, p.size);
                 } else {
@@ -353,14 +618,16 @@
                     ctx.fillRect(p.x, p.y, p.size, p.size);
                 }
 
-                ctx.strokeStyle = id === myId ? "#00ff88" : "#ffffff";
-                ctx.lineWidth = 2;
+                // 테두리(아우라 색상) 표시
+                ctx.strokeStyle = p.auraColor || "#00ff88";
+                ctx.lineWidth = 3;
                 ctx.strokeRect(p.x, p.y, p.size, p.size);
 
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "12px sans-serif";
+                // 상단 닉네임 표시 (내 캐릭터는 초록색 강조)
+                ctx.fillStyle = id === myId ? "#00ff88" : "#ffffff";
+                ctx.font = "bold 13px sans-serif";
                 ctx.textAlign = "center";
-                ctx.fillText(id === myId ? "나" : "상대방", p.x + p.size / 2, p.y - 8);
+                ctx.fillText(p.nickname || "익명", p.x + p.size / 2, p.y - 8);
             });
 
             requestAnimationFrame(draw);
