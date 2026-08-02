@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 모바일 캐시 방지 메타 태그 -->
+    <!-- 캐시 방지 (수정 시 즉각 반영을 위함) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>실시간 멀티플레이어 게임</title>
     
-    <!-- ========================================== -->
-    <!-- 1. CSS 스타일 (디자인)                     -->
-    <!-- ========================================== -->
     <style>
         * {
             box-sizing: border-box;
@@ -35,7 +32,7 @@
         }
 
         /* ---------------------------------- */
-        /* 공통 팝업 및 모달 화면             */
+        /* 공통 오버레이 (팝업) 화면         */
         /* ---------------------------------- */
         .overlay-screen {
             position: fixed;
@@ -43,7 +40,6 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: rgba(26, 26, 26, 0.95);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -51,137 +47,163 @@
             z-index: 999;
         }
 
-        /* 1단계: 닉네임 & 캐릭터 선택 */
+        /* STEP 1: 로그인(설정) 화면 */
+        #setup-screen {
+            /* GitHub에 bg.png를 올리셨다면 배경이 적용됩니다. 없으면 기본 검은색 */
+            background-image: url('./bg.png');
+            background-size: cover;
+            background-position: center;
+            background-color: #111; 
+        }
+
         #login-box {
-            background-color: #2a2a2a;
-            padding: 30px;
-            border-radius: 15px;
-            border: 2px solid #444;
+            background-color: rgba(20, 20, 20, 0.95);
+            padding: 35px;
+            border-radius: 16px;
+            border: 1px solid #333;
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
             max-width: 90%;
-            width: 380px;
+            width: 400px;
+            backdrop-filter: blur(10px);
         }
 
         #login-box h2 {
             margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 20px;
+            margin-bottom: 25px;
+            font-size: 22px;
             color: #00ff88;
+            letter-spacing: 1px;
         }
 
         .input-group {
             width: 100%;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .input-group label {
             display: block;
             font-size: 13px;
             color: #aaa;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
         }
 
         .input-group input {
             width: 100%;
-            padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid #555;
-            background-color: #111;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 2px solid #444;
+            background-color: rgba(0, 0, 0, 0.5);
             color: #fff;
-            font-size: 15px;
+            font-size: 16px;
             outline: none;
+            transition: border-color 0.3s;
         }
 
         .input-group input:focus {
-            border-color: #0088ff;
+            border-color: #00ff88;
         }
 
         .char-container {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             justify-content: center;
             width: 100%;
-            margin-bottom: 20px;
         }
 
         .char-card {
-            background-color: #111;
+            background-color: rgba(30, 30, 30, 0.8);
             border: 2px solid #444;
-            border-radius: 10px;
-            padding: 10px;
+            border-radius: 12px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 110px;
+            width: 120px;
             cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
+            transition: all 0.2s ease-in-out;
         }
 
         .char-card.selected {
             border-color: #00ff88;
-            transform: scale(1.05);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
+            background-color: rgba(0, 255, 136, 0.05);
         }
 
         .char-img-box {
             width: 80px;
             height: 80px;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 8px;
-            background-color: #000;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: transparent;
         }
 
         .char-img-box img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
+        }
+
+        .char-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ddd;
+        }
+
+        .char-card.selected .char-name {
+            color: #00ff88;
         }
 
         .primary-btn {
-            background-color: #0088ff;
-            color: white;
+            background-color: #00ff88;
+            color: #000;
             border: none;
-            padding: 12px 24px;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 8px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 900;
+            border-radius: 10px;
             cursor: pointer;
             width: 100%;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: all 0.2s;
         }
 
-        .primary-btn:hover { background-color: #0066cc; }
-        .primary-btn:active { transform: scale(0.98); }
+        .primary-btn:hover { background-color: #00cc6a; transform: translateY(-2px); }
+        .primary-btn:active { transform: translateY(0); }
 
-        /* 2단계: 메인 로비 / 대기실 (인터페이스) */
+        /* STEP 2: 대기실(로비) 화면 */
         #lobby-screen {
             display: none;
+            background-color: rgba(20, 20, 20, 0.98);
         }
 
-        /* 좌측 상단 프로필 구조 */
         #user-profile-bar {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 30px;
+            left: 30px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 10px 18px;
-            border-radius: 30px;
+            gap: 15px;
+            background: rgba(40, 40, 40, 0.8);
+            padding: 12px 24px;
+            border-radius: 40px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         #profile-avatar {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             border: 2px solid #00ff88;
-            object-fit: cover;
+            object-fit: contain;
+            background-color: #fff;
         }
 
         #profile-info {
@@ -190,91 +212,51 @@
         }
 
         #profile-nickname {
-            font-weight: bold;
-            font-size: 16px;
+            font-weight: 800;
+            font-size: 17px;
             color: #ffffff;
         }
 
         #profile-status {
-            font-size: 12px;
+            font-size: 13px;
             color: #00ff88;
+            font-weight: bold;
         }
 
-        /* 중앙 메뉴 상자 */
         .lobby-menu {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            width: 280px;
+            gap: 18px;
+            width: 320px;
         }
 
         .action-btn {
-            background-color: #333;
+            background-color: #2a2a2a;
             color: #fff;
-            border: 2px solid #555;
-            padding: 15px;
-            border-radius: 12px;
-            font-size: 16px;
+            border: 1px solid #444;
+            padding: 18px;
+            border-radius: 14px;
+            font-size: 17px;
             font-weight: bold;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
             transition: all 0.2s;
         }
 
         .action-btn:hover {
             border-color: #00ff88;
-            background-color: #444;
+            background-color: #333;
             transform: translateY(-2px);
         }
 
         .action-btn.start-btn {
             background-color: #0088ff;
-            border-color: #00aaff;
+            border-color: #0088ff;
         }
         .action-btn.start-btn:hover {
             background-color: #0066cc;
         }
 
-        /* 꾸미기 팝업 창 */
-        #customize-modal {
-            display: none;
-        }
-
-        .modal-box {
-            background-color: #222;
-            padding: 25px;
-            border-radius: 15px;
-            border: 1px solid #444;
-            width: 320px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .color-picker-group {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .color-dot {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: transform 0.2s;
-        }
-
-        .color-dot:hover { transform: scale(1.1); }
-        .color-dot.selected { border-color: #ffffff; }
-
-        /* ---------------------------------- */
-        /* 3단계: 실제 게임 화면              */
-        /* ---------------------------------- */
+        /* STEP 3: 인게임 화면 */
         #game-screen {
             display: none;
             flex-direction: column;
@@ -283,143 +265,157 @@
 
         #game-container {
             position: relative;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
             overflow: hidden;
             max-width: 100%;
+            background-color: #f0f0f0; /* 캐릭터가 돋보이도록 밝은 톤 배경 */
+            border: 4px solid #333;
         }
 
         canvas {
-            background-color: #2a2a2a;
             display: block;
             max-width: 100%;
             height: auto;
         }
 
         #status {
-            margin-top: 10px;
-            padding: 6px 14px;
-            background-color: #333333;
+            margin-top: 15px;
+            padding: 8px 18px;
+            background-color: #222;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 14px;
+            font-weight: bold;
+            border: 1px solid #444;
         }
 
         #dpad {
-            margin-top: 15px;
+            margin-top: 20px;
             display: grid;
-            grid-template-columns: repeat(3, 60px);
-            grid-template-rows: repeat(3, 60px);
-            gap: 5px;
+            grid-template-columns: repeat(3, 65px);
+            grid-template-rows: repeat(3, 65px);
+            gap: 8px;
         }
 
         .dpad-btn {
-            background-color: #444;
-            border: 2px solid #666;
+            background-color: #333;
+            border: 2px solid #555;
             color: white;
-            font-size: 20px;
-            border-radius: 12px;
+            font-size: 24px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             touch-action: none;
+            box-shadow: 0 4px 0 #111;
         }
 
-        .dpad-btn:active { background-color: #666; }
+        .dpad-btn:active { 
+            background-color: #555; 
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #111;
+        }
 
         #btn-up { grid-column: 2; grid-row: 1; }
         #btn-left { grid-column: 1; grid-row: 2; }
         #btn-right { grid-column: 3; grid-row: 2; }
         #btn-down { grid-column: 2; grid-row: 3; }
+
+        /* 잠수(AFK) 화면 */
+        #afk-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top:0; left:0; width:100vw; height:100vh;
+            background-color: rgba(10, 10, 10, 0.98);
+            z-index: 1000;
+        }
+
+        #afk-screen h1 {
+            color: #ff3333;
+            margin-bottom: 10px;
+            font-size: 30px;
+        }
+        
+        #afk-screen p {
+            color: #aaa;
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- ========================================== -->
-    <!-- STEP 1: 닉네임 입력 & 캐릭터 기본 선택 창 -->
-    <!-- ========================================== -->
+    <!-- 잠수 튕김 화면 -->
+    <div id="afk-screen">
+        <h1>연결이 종료되었습니다 💤</h1>
+        <p>3분 동안 움직임이 없어 로비에서 퇴장되었습니다.</p>
+        <button class="primary-btn" style="width: 250px;" onclick="location.reload()">새로고침 후 재접속</button>
+    </div>
+
+    <!-- STEP 1: 설정 화면 -->
     <div id="setup-screen" class="overlay-screen">
         <div id="login-box">
-            <h2>프로필 설정</h2>
+            <h2>캐릭터 프로필 생성</h2>
             
             <div class="input-group">
-                <label for="nickname-input">닉네임을 입력하세요</label>
-                <input type="text" id="nickname-input" placeholder="최대 8자 입력..." maxlength="8">
+                <label for="nickname-input">닉네임</label>
+                <input type="text" id="nickname-input" placeholder="최대 8자 입력" maxlength="8">
             </div>
 
             <div class="input-group">
-                <label>캐릭터 선택</label>
+                <label>플레이할 캐릭터</label>
                 <div class="char-container">
+                    <!-- GitHub에 업로드할 로컬 파일명 연결 (gojo.png) -->
                     <div class="char-card selected" id="card-char1" onclick="selectInitialChar('char1')">
                         <div class="char-img-box">
-                            <img src="https://image.zeta-ai.io/profile-image/3ccac6c2-9a72-4105-a1d1-b55e8d0924e4/35e03299-9201-4eea-9323-afac61c9d2ee.jpeg?w=750&q=75&f=webp" alt="캐릭터 1">
+                            <img src="./gojo.png" alt="고조사토루" id="img-char1" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='">
                         </div>
-                        <span style="font-size:12px;">캐릭터 A</span>
+                        <span class="char-name">고조사토루</span>
                     </div>
                     
+                    <!-- GitHub에 업로드할 로컬 파일명 연결 (luffy.png) -->
                     <div class="char-card" id="card-char2" onclick="selectInitialChar('char2')">
                         <div class="char-img-box">
-                            <img src="https://saegchil.co.kr/wp-content/uploads/2022/09/lupi-paiting-saegchil.jpg" alt="캐릭터 2">
+                            <img src="./luffy.png" alt="루피" id="img-char2" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='">
                         </div>
-                        <span style="font-size:12px;">캐릭터 B</span>
+                        <span class="char-name">루피</span>
                     </div>
                 </div>
             </div>
 
-            <button class="primary-btn" onclick="confirmSetup()">설정 완료 및 로비 이동</button>
+            <button class="primary-btn" onclick="confirmSetup()">입장하기</button>
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- STEP 2: 대기실 / 꾸미기 인터페이스 (HUB)  -->
-    <!-- ========================================== -->
+    <!-- STEP 2: 로비 화면 -->
     <div id="lobby-screen" class="overlay-screen">
-        <!-- 좌측 상단 내 프로필 표시 시스템 -->
         <div id="user-profile-bar">
-            <img id="profile-avatar" src="" alt="내 프로필">
+            <img id="profile-avatar" src="" alt="프로필">
             <div id="profile-info">
                 <span id="profile-nickname">닉네임</span>
-                <span id="profile-status">● 대기 중</span>
+                <span id="profile-status">● 온라인</span>
             </div>
         </div>
 
-        <!-- 메인 메뉴 버튼들 -->
         <div class="lobby-menu">
-            <button class="action-btn" onclick="openCustomizeModal()">🎨 캐릭터 꾸미기</button>
+            <button class="action-btn" onclick="alert('꾸미기 기능은 추후 업데이트 될 예정입니다!')">🎨 캐릭터 꾸미기 (준비중)</button>
             <button class="action-btn start-btn" onclick="enterGame()">🎮 게임 공간 입장하기</button>
         </div>
     </div>
 
-    <!-- 캐릭터 꾸미기 모달 (팝업창) -->
-    <div id="customize-modal" class="overlay-screen" style="background: rgba(0,0,0,0.8);">
-        <div class="modal-box">
-            <h3>테두리(아우라) 색상 선택</h3>
-            <p style="font-size: 13px; color:#aaa; margin: 0;">게임 내 내 캐릭터 테두리 빛을 바꿉니다.</p>
-            
-            <div class="color-picker-group">
-                <div class="color-dot selected" style="background:#00ff88;" onclick="setAuraColor('#00ff88', this)"></div>
-                <div class="color-dot" style="background:#ff0055;" onclick="setAuraColor('#ff0055', this)"></div>
-                <div class="color-dot" style="background:#00aaff;" onclick="setAuraColor('#00aaff', this)"></div>
-                <div class="color-dot" style="background:#ffcc00;" onclick="setAuraColor('#ffcc00', this)"></div>
-                <div class="color-dot" style="background:#aa00ff;" onclick="setAuraColor('#aa00ff', this)"></div>
-            </div>
-
-            <button class="primary-btn" onclick="closeCustomizeModal()" style="margin-top: 10px;">저장하기</button>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- STEP 3: 실제 게임 화면                    -->
-    <!-- ========================================== -->
+    <!-- STEP 3: 게임 화면 -->
     <div id="game-screen">
-        <p style="margin: 0 0 10px 0; color: #aaa; font-size: 13px;">PC는 방향키, 모바일은 하단 화살표를 누르세요.</p>
+        <p style="margin: 0 0 15px 0; color: #888; font-size: 14px; font-weight: bold;">조작: PC는 방향키 / 모바일은 화면 버튼</p>
         
         <div id="game-container">
             <canvas id="gameCanvas" width="600" height="400"></canvas>
         </div>
 
-        <div id="status">연결 중...</div>
+        <div id="status">서버 연결 중...</div>
 
-        <!-- 모바일 터치 컨트롤러 -->
+        <!-- 모바일 패드 -->
         <div id="dpad">
             <div class="dpad-btn" id="btn-up">▲</div>
             <div class="dpad-btn" id="btn-left">◀</div>
@@ -428,14 +424,11 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- JavaScript 게임 스크립트                   -->
-    <!-- ========================================== -->
+    <!-- Firebase 및 게임 스크립트 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { getDatabase, ref, set, remove, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-        // Firebase 설정
         const firebaseConfig = {
             apiKey: "AIzaSyDI2REmsCMwoaaV4xndPZKpX_EUntnCGk4",
             authDomain: "croos-9aafb.firebaseapp.com",
@@ -450,20 +443,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 이미지 경로 데이터
-        const CHAR_SRC = {
-            char1: "https://image.zeta-ai.io/profile-image/3ccac6c2-9a72-4105-a1d1-b55e8d0924e4/35e03299-9201-4eea-9323-afac61c9d2ee.jpeg?w=750&q=75&f=webp",
-            char2: "https://saegchil.co.kr/wp-content/uploads/2022/09/lupi-paiting-saegchil.jpg"
-        };
-
+        // GitHub에 업로드된 로컬 파일 경로를 지정합니다.
         const CHAR_IMAGES = {
             char1: new Image(),
             char2: new Image()
         };
-        CHAR_IMAGES.char1.src = CHAR_SRC.char1;
-        CHAR_IMAGES.char2.src = CHAR_SRC.char2;
+        CHAR_IMAGES.char1.src = "./gojo.png";
+        CHAR_IMAGES.char2.src = "./luffy.png";
 
-        // 내 정보 설정
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const statusEl = document.getElementById("status");
@@ -473,83 +460,85 @@
         let myPlayer = {
             nickname: "익명",
             charType: "char1",
-            auraColor: "#00ff88",
-            x: Math.floor(Math.random() * (canvas.width - 50)),
-            y: Math.floor(Math.random() * (canvas.height - 50)),
-            size: 45
+            x: Math.floor(Math.random() * (canvas.width - 60)),
+            y: Math.floor(Math.random() * (canvas.height - 60)),
+            size: 55 // 캐릭터가 잘 보이도록 사이즈업
         };
 
         let players = {};
         const keysPressed = {};
         let isGameStarted = false;
+        let isAFK = false;
 
         const myRef = ref(db, `players/${myId}`);
         const playersRef = ref(db, 'players');
 
-        // ------------------------------------------
-        // UI 로직 (오프닝 & 로비 인터페이스)
-        // ------------------------------------------
-        
-        // 1. 초기 캐릭터 선택 함수
+        // 3분(180초) 잠수 체크 시스템
+        let lastActivityTime = Date.now();
+        const AFK_LIMIT = 3 * 60 * 1000;
+
+        function resetActivityTime() {
+            if (isAFK) return;
+            lastActivityTime = Date.now();
+        }
+
+        window.addEventListener('mousemove', resetActivityTime);
+        window.addEventListener('keydown', resetActivityTime);
+        window.addEventListener('touchstart', resetActivityTime);
+        window.addEventListener('click', resetActivityTime);
+
+        setInterval(() => {
+            if (isGameStarted && !isAFK && (Date.now() - lastActivityTime > AFK_LIMIT)) {
+                isAFK = true;
+                isGameStarted = false;
+                remove(myRef); // 서버에서 내 캐릭터 삭제
+                document.getElementById("lobby-screen").style.display = "none";
+                document.getElementById("game-screen").style.display = "none";
+                document.getElementById("afk-screen").style.display = "flex";
+            }
+        }, 1000);
+
         window.selectInitialChar = function(charType) {
             myPlayer.charType = charType;
             document.querySelectorAll('.char-card').forEach(card => card.classList.remove('selected'));
             document.getElementById(`card-${charType}`).classList.add('selected');
         };
 
-        // 2. 초기 프로필 입력 확정
         window.confirmSetup = function() {
             const inputVal = document.getElementById("nickname-input").value.trim();
             if (!inputVal) {
-                alert("닉네임을 입력해 주세요!");
+                alert("멋진 닉네임을 입력해 주세요!");
                 return;
             }
 
             myPlayer.nickname = inputVal;
-
-            // 좌측 상단 프로필 화면 업데이트
             document.getElementById("profile-nickname").textContent = myPlayer.nickname;
-            document.getElementById("profile-avatar").src = CHAR_SRC[myPlayer.charType];
+            
+            // 로비 좌측 상단 프로필 이미지 연동
+            if(myPlayer.charType === 'char1') {
+                document.getElementById("profile-avatar").src = "./gojo.png";
+            } else {
+                document.getElementById("profile-avatar").src = "./luffy.png";
+            }
 
-            // 화면 전환 (설정창 -> 로비 대기실)
             document.getElementById("setup-screen").style.display = "none";
             document.getElementById("lobby-screen").style.display = "flex";
+            resetActivityTime();
         };
 
-        // 3. 꾸미기 팝업 창 열기 / 닫기
-        window.openCustomizeModal = function() {
-            document.getElementById("customize-modal").style.display = "flex";
-        };
-
-        window.closeCustomizeModal = function() {
-            document.getElementById("customize-modal").style.display = "none";
-        };
-
-        // 4. 꾸미기 아우라 색상 선택
-        window.setAuraColor = function(color, element) {
-            myPlayer.auraColor = color;
-            document.querySelectorAll('.color-dot').forEach(dot => dot.classList.remove('selected'));
-            element.classList.add('selected');
-        };
-
-        // 5. 게임 최종 입장
         window.enterGame = function() {
             document.getElementById("lobby-screen").style.display = "none";
             document.getElementById("game-screen").style.display = "flex";
 
-            // DB 저장 및 게임 루프 가동
             set(myRef, myPlayer);
             onDisconnect(myRef).remove();
             isGameStarted = true;
+            resetActivityTime();
         };
 
-        // ------------------------------------------
-        // 게임 컨트롤 & 렌더링 로직
-        // ------------------------------------------
         onValue(playersRef, (snapshot) => {
             players = snapshot.val() || {};
-            const playerCount = Object.keys(players).length;
-            statusEl.textContent = `현재 접속자: ${playerCount}명`;
+            statusEl.textContent = `현재 서버 인원: ${Object.keys(players).length}명 접속 중`;
         });
 
         window.addEventListener("keydown", (e) => keysPressed[e.key] = true);
@@ -558,10 +547,8 @@
         function bindTouchBtn(btnId, keyName) {
             const btn = document.getElementById(btnId);
             if (!btn) return;
-
-            const startHandler = (e) => { e.preventDefault(); keysPressed[keyName] = true; };
-            const endHandler = (e) => { e.preventDefault(); keysPressed[keyName] = false; };
-
+            const startHandler = (e) => { e.preventDefault(); keysPressed[keyName] = true; resetActivityTime(); };
+            const endHandler = (e) => { e.preventDefault(); keysPressed[keyName] = false; resetActivityTime(); };
             btn.addEventListener("touchstart", startHandler);
             btn.addEventListener("touchend", endHandler);
             btn.addEventListener("mousedown", startHandler);
@@ -575,9 +562,8 @@
         bindTouchBtn("btn-right", "ArrowRight");
 
         function updatePosition() {
-            if (!isGameStarted) return;
-
-            const speed = 4;
+            if (!isGameStarted || isAFK) return;
+            const speed = 4.5;
             let moved = false;
 
             if (keysPressed["ArrowUp"] && myPlayer.y > 0) { myPlayer.y -= speed; moved = true; }
@@ -585,49 +571,50 @@
             if (keysPressed["ArrowLeft"] && myPlayer.x > 0) { myPlayer.x -= speed; moved = true; }
             if (keysPressed["ArrowRight"] && myPlayer.x < canvas.width - myPlayer.size) { myPlayer.x += speed; moved = true; }
 
-            if (moved) {
-                set(myRef, myPlayer);
-            }
+            if (moved) { set(myRef, myPlayer); }
         }
 
         function draw() {
-            updatePosition();
+            if (!isAFK) { updatePosition(); }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 배경 격자
-            ctx.strokeStyle = "#3a3a3a";
+            // 타일 바닥 느낌의 그리드
+            ctx.strokeStyle = "#ddd";
             ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += 40) {
+            for (let x = 0; x < canvas.width; x += 50) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
             }
-            for (let y = 0; y < canvas.height; y += 40) {
+            for (let y = 0; y < canvas.height; y += 50) {
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
             }
 
-            // 모든 플레이어 렌더링
+            // 캐릭터들 그리기
             Object.keys(players).forEach((id) => {
                 const p = players[id];
                 const charImg = CHAR_IMAGES[p.charType] || CHAR_IMAGES.char1;
 
-                // 캐릭터 그리개
-                if (charImg && charImg.complete) {
+                // 이미지가 로드된 상태면 캔버스에 그림
+                if (charImg && charImg.complete && charImg.naturalWidth !== 0) {
                     ctx.drawImage(charImg, p.x, p.y, p.size, p.size);
                 } else {
-                    ctx.fillStyle = "#ffffff";
+                    // 이미지 로드 전이거나 실패 시 기본 사각형
+                    ctx.fillStyle = id === myId ? "#00ff88" : "#ff4444";
                     ctx.fillRect(p.x, p.y, p.size, p.size);
                 }
 
-                // 테두리(아우라 색상) 표시
-                ctx.strokeStyle = p.auraColor || "#00ff88";
-                ctx.lineWidth = 3;
-                ctx.strokeRect(p.x, p.y, p.size, p.size);
+                // 닉네임 텍스트 배경 (가독성 향상)
+                const text = p.nickname || "익명";
+                ctx.font = "bold 13px 'Segoe UI', sans-serif";
+                const textWidth = ctx.measureText(text).width;
+                ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+                ctx.fillRect(p.x + p.size / 2 - textWidth / 2 - 4, p.y - 18, textWidth + 8, 16);
+                ctx.border = "1px solid black";
 
-                // 상단 닉네임 표시 (내 캐릭터는 초록색 강조)
+                // 닉네임 텍스트
                 ctx.fillStyle = id === myId ? "#00ff88" : "#ffffff";
-                ctx.font = "bold 13px sans-serif";
                 ctx.textAlign = "center";
-                ctx.fillText(p.nickname || "익명", p.x + p.size / 2, p.y - 8);
+                ctx.fillText(text, p.x + p.size / 2, p.y - 6);
             });
 
             requestAnimationFrame(draw);
