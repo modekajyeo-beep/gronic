@@ -79,32 +79,36 @@ window.selectInitialChar = function(charType) {
     document.getElementById(`card-${charType}`).classList.add('selected');
 };
 
-// 🔑 4자리 PIN 코드 로그인 & 생성 로직
+// 🔑 4자리 PIN 코드 로그인 & 생성 완벽 개선
 window.handlePinLogin = function() {
     const pin = document.getElementById('user-pin').value.trim();
     const inputNickname = document.getElementById('user-nickname').value.trim();
 
+    // 1. PIN 번호 유효성 검사
     if(pin.length !== 4 || isNaN(pin)) {
-        alert("숫자 4자리 PIN 코드를 정확히 입력해 주세요! (예: 1234)");
+        alert("숫자 4자리 코드를 정확히 입력해 주세요! (예: 1234)");
         return;
     }
 
     const userRef = ref(db, `users/PIN_${pin}`);
+    
+    // 2. DB에서 유저 정보 가져오기 시도
     get(userRef).then((snapshot) => {
         if (snapshot.exists()) {
-            // 이미 존재함 ➡️ 데이터 불러오기
+            // [기존 유저] 저장된 데이터 불러오기
             const userData = snapshot.val();
             myPlayer.userId = `PIN_${pin}`;
             myPlayer.nickname = userData.nickname;
-            myPlayer.charType = userData.charType;
+            myPlayer.charType = userData.charType || "char1";
             myPlayer.level = userData.level || 1;
             myPlayer.exp = userData.exp || 0;
             myPlayer.maxExp = userData.maxExp || 100;
+            
             alert(`👋 환영합니다, ${myPlayer.nickname}님! [Lv.${myPlayer.level}] 데이터를 불러왔습니다.`);
         } else {
-            // 처음 접속함 ➡️ 새 캐릭터 등록
+            // [신규 유저] 처음 접속하는 코드일 경우
             if(!inputNickname) {
-                alert("처음 사용하시는 4자리 코드입니다! 아래 닉네임을 입력해 주세요.");
+                alert("이 4자리 코드는 처음 접속하는 코드네요!\n'닉네임'을 먼저 입력하고 다시 접속 버튼을 눌러주세요.");
                 return;
             }
 
@@ -123,9 +127,10 @@ window.handlePinLogin = function() {
                 exp: 0,
                 maxExp: 100
             });
-            alert(`🎉 [${pin}] 코드로 신규 캐릭터가 생성되었습니다!`);
+            alert(`🎉 신규 캐릭터 [${myPlayer.nickname}] 생성 완료! 접속합니다.`);
         }
 
+        // 공통 접속 처리 (성공 시)
         myPlayer.x = Math.floor(Math.random() * (canvas.width - 60));
         myPlayer.y = Math.floor(Math.random() * (canvas.height - 60));
 
@@ -134,6 +139,11 @@ window.handlePinLogin = function() {
         document.getElementById("setup-screen").style.display = "none";
         document.getElementById("lobby-screen").style.display = "flex";
         resetActivityTime();
+        
+    }).catch((error) => {
+        // [오류 발생 시] 화면이 먹통되지 않도록 알림창 띄우기
+        console.error("데이터베이스 접근 에러:", error);
+        alert("데이터베이스 연결에 실패했습니다!\n파이어베이스 규칙(Rules)이 막혀있거나 네트워크 문제일 수 있습니다.\n에러 내용: " + error.message);
     });
 };
 
