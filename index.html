@@ -21,65 +21,42 @@
         <button class="primary-btn" style="width: 250px;" onclick="location.reload()">새로고침 후 재접속</button>
     </div>
 
-    <!-- STEP 1: 로그인 & 회원가입 화면 -->
+    <!-- STEP 1: 4자리 PIN 코드 접속 화면 -->
     <div id="setup-screen" class="overlay-screen">
         <div id="login-box">
-            <h2>🎮 온라인 키우기 RPG</h2>
+            <h2>🔑 4자리 코드로 간편 접속</h2>
+            <p style="color:#aaa; font-size:13px; margin:-10px 0 15px 0;">나만의 4자리 비밀번호로 캐릭터를 키워보세요!</p>
             
-            <!-- 로그인/회원가입 탭 버튼 -->
-            <div class="auth-tabs">
-                <button id="tab-login-btn" class="auth-tab-btn active" onclick="switchAuthTab('login')">로그인</button>
-                <button id="tab-signup-btn" class="auth-tab-btn" onclick="switchAuthTab('signup')">회원가입</button>
+            <div class="input-group">
+                <label>🔑 나만의 4자리 코드 (숫자)</label>
+                <input type="password" id="user-pin" maxlength="4" placeholder="예: 1234" style="text-align:center; font-size:20px; letter-spacing:5px;">
             </div>
 
-            <!-- 1. 로그인 폼 -->
-            <div id="login-form">
-                <div class="input-group">
-                    <label>아이디</label>
-                    <input type="text" id="login-id" placeholder="아이디 입력">
-                </div>
-                <div class="input-group">
-                    <label>비밀번호</label>
-                    <input type="password" id="login-pw" placeholder="비밀번호 입력">
-                </div>
-                <button class="primary-btn" onclick="handleLogin()">로그인하기</button>
+            <div class="input-group">
+                <label>👤 닉네임 (처음 접속할 때만 입력)</label>
+                <input type="text" id="user-nickname" placeholder="최대 8자 입력" maxlength="8">
             </div>
 
-            <!-- 2. 회원가입 폼 -->
-            <div id="signup-form" style="display: none;">
-                <div class="input-group">
-                    <label>생성할 아이디</label>
-                    <input type="text" id="signup-id" placeholder="아이디">
-                </div>
-                <div class="input-group">
-                    <label>비밀번호</label>
-                    <input type="password" id="signup-pw" placeholder="비밀번호">
-                </div>
-                <div class="input-group">
-                    <label>게임 닉네임</label>
-                    <input type="text" id="signup-nickname" placeholder="최대 8자 입력" maxlength="8">
-                </div>
-                <div class="input-group">
-                    <label>대표 캐릭터 선택</label>
-                    <div class="char-container">
-                        <div class="char-card selected" id="card-char1" onclick="selectInitialChar('char1')">
-                            <div class="char-img-box">
-                                <img src="./gojo.png" alt="고조사토루">
-                            </div>
-                            <span class="char-name">고조사토루</span>
+            <div class="input-group">
+                <label>🎭 대표 캐릭터 선택 (처음 접속 시)</label>
+                <div class="char-container">
+                    <div class="char-card selected" id="card-char1" onclick="selectInitialChar('char1')">
+                        <div class="char-img-box">
+                            <img src="./gojo.png" alt="고조사토루">
                         </div>
-                        
-                        <div class="char-card" id="card-char2" onclick="selectInitialChar('char2')">
-                            <div class="char-img-box">
-                                <img src="./luffy.png" alt="루피">
-                            </div>
-                            <span class="char-name">루피</span>
+                        <span class="char-name">고조사토루</span>
+                    </div>
+                    
+                    <div class="char-card" id="card-char2" onclick="selectInitialChar('char2')">
+                        <div class="char-img-box">
+                            <img src="./luffy.png" alt="루피">
                         </div>
+                        <span class="char-name">루피</span>
                     </div>
                 </div>
-                <button class="primary-btn" onclick="handleSignUp()">회원가입 완료</button>
             </div>
 
+            <button class="primary-btn" onclick="handlePinLogin()">게임 접속 / 캐릭터 불러오기</button>
         </div>
     </div>
 
@@ -109,20 +86,7 @@
     <!-- 헬스 기록 보관함 화면 -->
     <div id="record-screen" class="overlay-screen" style="display: none; background-color: rgba(10, 10, 10, 0.95); z-index: 9999;">
         <div id="record-box">
-            
-            <!-- 1단계: 4자리 PIN 입력 -->
-            <div id="pin-view" class="pin-box">
-                <h2>🔒 개인 보관함 4자리 비밀코드</h2>
-                <p style="color:#aaa; font-size:14px; margin:0 0 10px 0;">나만의 비밀 4자리 코드를 입력하세요!</p>
-                <input type="password" id="pin-input-field" class="pin-input" maxlength="4" placeholder="••••" onkeyup="if(event.key==='Enter') unlockRecordBox()">
-                <div class="record-actions" style="margin-top: 15px;">
-                    <button class="primary-btn" onclick="unlockRecordBox()">보관함 열기</button>
-                    <button class="primary-btn close-btn" onclick="closeRecordBox()">닫기</button>
-                </div>
-            </div>
-
-            <!-- 2단계: 메인 기록 화면 -->
-            <div id="main-record-view" style="display: none; width: 100%;">
+            <div id="main-record-view" style="width: 100%;">
                 <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:10px;">
                     <h2 style="margin:0;">💪 헬스 기록 보관함</h2>
                     <span id="active-pin-tag" style="color:#00ff88; font-weight:bold; font-size:13px; background:#222; padding:4px 8px; border-radius:6px; border:1px solid #00ff88;">코드: ****</span>
@@ -147,7 +111,6 @@
                     <button class="primary-btn close-btn" onclick="closeRecordBox()">닫기</button>
                 </div>
             </div>
-
         </div>
     </div>
 
