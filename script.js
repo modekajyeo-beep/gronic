@@ -38,7 +38,11 @@ const db = getDatabase(app);
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const statusEl = document.getElementById("status");
+
+
+// 게임 내부 해상도
+canvas.width = 960;
+canvas.height = 540;
 
 
 // ==========================================
@@ -53,46 +57,6 @@ const CHAR_IMAGES = {
 CHAR_IMAGES.char1.src = "./gojo.png";
 CHAR_IMAGES.char2.src = "./luffy.png";
 
-const bgImage = new Image();
-bgImage.src = "./bg.png";
-
-
-// ==========================================
-// 스킨 시스템
-// ==========================================
-
-const SKINS = {
-    skin1: {
-        name: "기본 스킨",
-        image: null
-    },
-
-    skin2: {
-        name: "스킨 2",
-        image: "./skins/skin2.png"
-    },
-
-    skin3: {
-        name: "스킨 3",
-        image: "./skins/skin3.png"
-    },
-
-    skin4: {
-        name: "스킨 4",
-        image: "./skins/skin4.png"
-    },
-
-    skin5: {
-        name: "스킨 5",
-        image: "./skins/skin5.png"
-    },
-
-    skin6: {
-        name: "스킨 6",
-        image: "./skins/skin6.png"
-    }
-};
-
 
 // ==========================================
 // 플레이어
@@ -101,35 +65,38 @@ const SKINS = {
 let myPlayer = {
 
     userId: "",
+
     nickname: "익명",
 
     charType: "char1",
-    skinId: "skin1",
 
     level: 1,
+
     exp: 0,
+
     maxExp: 100,
 
     x: 100,
+
     y: 200,
 
     size: 55,
 
     facing: "right",
 
-    energy: 0,
-    maxEnergy: 100,
-
+    // HP
     hp: 100,
+
     maxHp: 100,
+
+    // 에너지
+    energy: 0,
+
+    maxEnergy: 100,
 
     combo: 0
 };
 
-
-// ==========================================
-// 게임 상태
-// ==========================================
 
 let players = {};
 
@@ -137,11 +104,9 @@ const keysPressed = {};
 
 let isGameStarted = false;
 
-let isGuest = false;
-
-let isGameOver = false;
-
 let myRef = null;
+
+let isGuest = false;
 
 
 // ==========================================
@@ -154,7 +119,7 @@ let damageTexts = [];
 
 
 // ==========================================
-// 몬스터
+// 테스트 몬스터
 // ==========================================
 
 let testMonster = {
@@ -163,208 +128,23 @@ let testMonster = {
 
     name: "테스트 몬스터",
 
-    x: 400,
-    y: 200,
+    x: 500,
+
+    y: 250,
 
     size: 45,
 
     hp: 100,
+
     maxHp: 100,
 
     speed: 1.2,
 
     state: "IDLE",
 
-    facing: "left",
+    facing: "left"
 
-    attackDamage: 10,
-
-    attackCooldown: 1000,
-
-    lastAttackTime: 0
 };
-
-
-// ==========================================
-// 현재 캐릭터 이미지 가져오기
-// ==========================================
-
-function getCurrentCharacterImage(player) {
-
-    if (player.skinId &&
-        SKINS[player.skinId] &&
-        SKINS[player.skinId].image) {
-
-        if (!SKINS[player.skinId]._img) {
-
-            const img = new Image();
-
-            img.src = SKINS[player.skinId].image;
-
-            SKINS[player.skinId]._img = img;
-        }
-
-        const img = SKINS[player.skinId]._img;
-
-        if (img.complete && img.naturalWidth > 0) {
-            return img;
-        }
-    }
-
-    return CHAR_IMAGES[player.charType] || CHAR_IMAGES.char1;
-}
-
-
-// ==========================================
-// Firebase에 플레이어 정보 저장
-// ==========================================
-
-function savePlayerToFirebase() {
-
-    if (!myRef || isGuest) return;
-
-    set(myRef, {
-
-        userId: myPlayer.userId,
-
-        nickname: myPlayer.nickname,
-
-        charType: myPlayer.charType,
-
-        skinId: myPlayer.skinId,
-
-        level: myPlayer.level,
-
-        exp: myPlayer.exp,
-
-        maxExp: myPlayer.maxExp,
-
-        hp: myPlayer.hp,
-
-        maxHp: myPlayer.maxHp,
-
-        energy: myPlayer.energy,
-
-        maxEnergy: myPlayer.maxEnergy,
-
-        x: myPlayer.x,
-
-        y: myPlayer.y,
-
-        size: myPlayer.size,
-
-        facing: myPlayer.facing
-    });
-}
-
-
-// ==========================================
-// UI 업데이트
-// ==========================================
-
-function updateLobbyUI() {
-
-    const profileNickname =
-        document.getElementById("profile-nickname");
-
-    const profileLevel =
-        document.getElementById("profile-level-badge");
-
-    const profileAvatar =
-        document.getElementById("profile-avatar");
-
-    if (profileNickname) {
-        profileNickname.textContent = myPlayer.nickname;
-    }
-
-    if (profileLevel) {
-        profileLevel.textContent = `Lv.${myPlayer.level}`;
-    }
-
-    if (profileAvatar) {
-        const img = getCurrentCharacterImage(myPlayer);
-
-        if (img && img.src) {
-            profileAvatar.src = img.src;
-        } else {
-            profileAvatar.src =
-                myPlayer.charType === "char1"
-                    ? "./gojo.png"
-                    : "./luffy.png";
-        }
-    }
-
-    updateHUD();
-}
-
-
-// ==========================================
-// HUD
-// ==========================================
-
-function updateHUD() {
-
-    const levelEl =
-        document.getElementById("hud-level");
-
-    const hpFill =
-        document.getElementById("hud-hp-fill");
-
-    const hpText =
-        document.getElementById("hud-hp-text");
-
-    const energyFill =
-        document.getElementById("hud-energy-fill");
-
-    const energyText =
-        document.getElementById("hud-energy-text");
-
-
-    if (levelEl) {
-        levelEl.textContent =
-            `Lv.${myPlayer.level}`;
-    }
-
-
-    if (hpFill) {
-
-        const percent =
-            Math.max(
-                0,
-                Math.min(
-                    100,
-                    (myPlayer.hp / myPlayer.maxHp) * 100
-                )
-            );
-
-        hpFill.style.width =
-            `${percent}%`;
-    }
-
-
-    if (hpText) {
-
-        hpText.textContent =
-            `❤️ HP ${Math.ceil(myPlayer.hp)} / ${myPlayer.maxHp}`;
-    }
-
-
-    if (energyFill) {
-
-        const percent =
-            (myPlayer.energy / myPlayer.maxEnergy) * 100;
-
-        energyFill.style.width =
-            `${Math.max(0, Math.min(100, percent))}%`;
-    }
-
-
-    if (energyText) {
-
-        energyText.textContent =
-            `에너지 ${Math.floor(myPlayer.energy)}%`;
-    }
-}
 
 
 // ==========================================
@@ -377,21 +157,23 @@ window.selectInitialChar = function(charType) {
 
     document
         .querySelectorAll(".char-card")
-        .forEach(c =>
-            c.classList.remove("selected")
+        .forEach(card => {
+            card.classList.remove("selected");
+        });
+
+    const selectedCard =
+        document.getElementById(
+            `card-${charType}`
         );
 
-    const card =
-        document.getElementById(`card-${charType}`);
-
-    if (card) {
-        card.classList.add("selected");
+    if (selectedCard) {
+        selectedCard.classList.add("selected");
     }
 };
 
 
 // ==========================================
-// PIN 로그인
+// 로그인
 // ==========================================
 
 window.handlePinLogin = function() {
@@ -409,7 +191,10 @@ window.handlePinLogin = function() {
             .trim();
 
 
-    if (pin.length !== 4 || isNaN(pin)) {
+    if (
+        pin.length !== 4 ||
+        isNaN(pin)
+    ) {
 
         alert(
             "숫자 4자리 코드를 정확히 입력해 주세요!"
@@ -419,15 +204,18 @@ window.handlePinLogin = function() {
     }
 
 
+    isGuest = false;
+
+
     const userRef =
-        ref(db, `users/PIN_${pin}`);
+        ref(
+            db,
+            `users/PIN_${pin}`
+        );
 
 
     get(userRef)
-
-        .then((snapshot) => {
-
-            isGuest = false;
+        .then(snapshot => {
 
             if (snapshot.exists()) {
 
@@ -438,13 +226,11 @@ window.handlePinLogin = function() {
                     `PIN_${pin}`;
 
                 myPlayer.nickname =
-                    userData.nickname || "익명";
+                    userData.nickname;
 
                 myPlayer.charType =
-                    userData.charType || "char1";
-
-                myPlayer.skinId =
-                    userData.skinId || "skin1";
+                    userData.charType ||
+                    "char1";
 
                 myPlayer.level =
                     userData.level || 1;
@@ -461,12 +247,17 @@ window.handlePinLogin = function() {
                 myPlayer.maxHp =
                     userData.maxHp ?? 100;
 
+
+                alert(
+                    `👋 ${myPlayer.nickname}님 환영합니다!`
+                );
+
             } else {
 
                 if (!inputNickname) {
 
                     alert(
-                        "처음 접속하는 코드입니다.\n닉네임을 입력해주세요."
+                        "처음 접속하는 코드입니다!\n닉네임을 입력해주세요."
                     );
 
                     return;
@@ -479,12 +270,6 @@ window.handlePinLogin = function() {
                 myPlayer.nickname =
                     inputNickname;
 
-                myPlayer.charType =
-                    myPlayer.charType || "char1";
-
-                myPlayer.skinId =
-                    "skin1";
-
                 myPlayer.level = 1;
 
                 myPlayer.exp = 0;
@@ -496,44 +281,38 @@ window.handlePinLogin = function() {
                 myPlayer.maxHp = 100;
 
 
-                set(userRef, {
+                set(
+                    userRef,
+                    {
+                        nickname:
+                            myPlayer.nickname,
 
-                    nickname:
-                        myPlayer.nickname,
+                        charType:
+                            myPlayer.charType,
 
-                    charType:
-                        myPlayer.charType,
+                        level: 1,
 
-                    skinId:
-                        myPlayer.skinId,
+                        exp: 0,
 
-                    level: 1,
+                        maxExp: 100,
 
-                    exp: 0,
+                        hp: 100,
 
-                    maxExp: 100,
+                        maxHp: 100
+                    }
+                );
 
-                    hp: 100,
 
-                    maxHp: 100
-                });
+                alert(
+                    `🎉 ${myPlayer.nickname} 생성 완료!`
+                );
             }
 
 
             updateLobbyUI();
 
-
-            document
-                .getElementById("setup-screen")
-                .style.display = "none";
-
-            document
-                .getElementById("lobby-screen")
-                .style.display = "flex";
-
         })
-
-        .catch((error) => {
+        .catch(error => {
 
             console.error(
                 "DB 에러:",
@@ -541,9 +320,9 @@ window.handlePinLogin = function() {
             );
 
             alert(
-                "데이터베이스 연결 실패!\n" +
-                error.message
+                "데이터베이스 연결 실패!"
             );
+
         });
 };
 
@@ -552,24 +331,16 @@ window.handlePinLogin = function() {
 // 게스트 모드
 // ==========================================
 
-window.startGuestMode = function() {
+window.enterGuestMode = function() {
 
     isGuest = true;
 
-    const guestNumber =
-        Math.floor(
-            1000 + Math.random() * 9000
-        );
 
     myPlayer.userId =
-        `GUEST_${Date.now()}_${guestNumber}`;
+        `guest_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     myPlayer.nickname =
-        `게스트_${guestNumber}`;
-
-    myPlayer.charType = "char1";
-
-    myPlayer.skinId = "skin1";
+        "게스트";
 
     myPlayer.level = 1;
 
@@ -581,10 +352,48 @@ window.startGuestMode = function() {
 
     myPlayer.maxHp = 100;
 
-    myPlayer.energy = 0;
+    myPlayer.x = 100;
+
+    myPlayer.y = 200;
 
 
     updateLobbyUI();
+
+
+    alert(
+        "👤 게스트 모드로 시작합니다.\n\n게임을 종료하면 데이터가 저장되지 않습니다."
+    );
+};
+
+
+// ==========================================
+// 로비 UI
+// ==========================================
+
+function updateLobbyUI() {
+
+    document
+        .getElementById("profile-nickname")
+        .textContent =
+        myPlayer.nickname;
+
+    document
+        .getElementById("profile-level-badge")
+        .textContent =
+        `Lv.${myPlayer.level}`;
+
+    document
+        .getElementById("profile-avatar")
+        .src =
+        myPlayer.charType === "char1"
+            ? "./gojo.png"
+            : "./luffy.png";
+
+
+    document
+        .getElementById("lobby-hp-text")
+        .textContent =
+        `${myPlayer.hp} / ${myPlayer.maxHp}`;
 
 
     document
@@ -594,7 +403,63 @@ window.startGuestMode = function() {
     document
         .getElementById("lobby-screen")
         .style.display = "flex";
+}
+
+
+// ==========================================
+// 꾸미기
+// ==========================================
+
+window.openCustomize = function() {
+
+    const screen =
+        document.getElementById(
+            "customize-screen"
+        );
+
+    screen.style.display = "flex";
+
+    updateSkinPreview();
 };
+
+
+window.closeCustomize = function() {
+
+    document
+        .getElementById(
+            "customize-screen"
+        )
+        .style.display = "none";
+};
+
+
+window.selectSkin = function(charType) {
+
+    myPlayer.charType = charType;
+
+    updateSkinPreview();
+
+    document
+        .getElementById("profile-avatar")
+        .src =
+        charType === "char1"
+            ? "./gojo.png"
+            : "./luffy.png";
+};
+
+
+function updateSkinPreview() {
+
+    const preview =
+        document.getElementById(
+            "skin-preview-img"
+        );
+
+    preview.src =
+        myPlayer.charType === "char1"
+            ? "./gojo.png"
+            : "./luffy.png";
+}
 
 
 // ==========================================
@@ -608,31 +473,23 @@ window.enterGame = function() {
         .style.display = "none";
 
     document
-        .getElementById("customize-screen")
-        .style.display = "none";
-
-    document
         .getElementById("game-screen")
         .style.display = "flex";
 
 
-    document
-        .getElementById("game-over-screen")
-        .style.display = "none";
-
-
-    isGameOver = false;
-
     isGameStarted = true;
 
 
-    myPlayer.hp =
-        Math.min(
-            myPlayer.hp,
-            myPlayer.maxHp
-        );
+    // 게스트
+    if (isGuest) {
+
+        myRef = null;
+
+        return;
+    }
 
 
+    // 로그인 사용자
     myRef =
         ref(
             db,
@@ -640,351 +497,182 @@ window.enterGame = function() {
         );
 
 
-    set(myRef, {
-
-        userId: myPlayer.userId,
-
-        nickname: myPlayer.nickname,
-
-        charType: myPlayer.charType,
-
-        skinId: myPlayer.skinId,
-
-        level: myPlayer.level,
-
-        hp: myPlayer.hp,
-
-        maxHp: myPlayer.maxHp,
-
-        x: myPlayer.x,
-
-        y: myPlayer.y,
-
-        size: myPlayer.size,
-
-        facing: myPlayer.facing
-    });
+    set(
+        myRef,
+        myPlayer
+    );
 
 
-    onDisconnect(myRef).remove();
-
-    updateHUD();
+    onDisconnect(myRef)
+        .remove();
 };
 
 
 // ==========================================
-// 게임 재시작
+// HP UI
 // ==========================================
 
-window.restartGame = function() {
+function updateHPUI() {
 
-    myPlayer.hp =
-        myPlayer.maxHp;
-
-    myPlayer.x = 100;
-    myPlayer.y = 200;
-
-    myPlayer.facing = "right";
-
-    testMonster.x = 500;
-    testMonster.y = 200;
-
-    testMonster.hp =
-        testMonster.maxHp;
-
-    testMonster.state = "IDLE";
-
-    testMonster.lastAttackTime = 0;
-
-    effects = [];
-
-    damageTexts = [];
-
-    isGameOver = false;
-
-    isGameStarted = true;
+    const hpPercent =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                (myPlayer.hp /
+                    myPlayer.maxHp) *
+                100
+            )
+        );
 
 
-    document
-        .getElementById("game-over-screen")
-        .style.display = "none";
+    const fill =
+        document.getElementById(
+            "hud-hp-fill"
+        );
+
+    const text =
+        document.getElementById(
+            "hud-hp-text"
+        );
 
 
-    savePlayerToFirebase();
+    if (fill) {
+        fill.style.width =
+            `${hpPercent}%`;
+    }
 
-    updateHUD();
-};
+    if (text) {
+        text.textContent =
+            `HP ${myPlayer.hp} / ${myPlayer.maxHp}`;
+    }
+}
 
 
 // ==========================================
-// 로비로 돌아가기
+// 에너지 UI
 // ==========================================
 
-window.returnToLobby = function() {
+function updateEnergyUI() {
 
-    isGameStarted = false;
+    const percent =
+        (myPlayer.energy /
+            myPlayer.maxEnergy) *
+        100;
 
-    isGameOver = false;
+
+    const fill =
+        document.getElementById(
+            "hud-energy-fill"
+        );
+
+    const text =
+        document.getElementById(
+            "hud-energy-text"
+        );
+
+
+    if (fill) {
+
+        fill.style.width =
+            `${percent}%`;
+    }
+
+    if (text) {
+
+        text.textContent =
+            `EN ${myPlayer.energy} / ${myPlayer.maxEnergy}`;
+    }
+}
+
+
+// ==========================================
+// 플레이어 데미지
+// ==========================================
+
+function damagePlayer(damage) {
+
+    if (!isGameStarted) return;
+
+    if (myPlayer.hp <= 0) return;
+
+
+    myPlayer.hp -= damage;
+
+
+    if (myPlayer.hp < 0) {
+        myPlayer.hp = 0;
+    }
+
+
+    updateHPUI();
 
 
     if (myRef) {
 
-        remove(myRef);
-
-        myRef = null;
+        set(
+            myRef,
+            myPlayer
+        );
     }
 
 
-    document
-        .getElementById("game-over-screen")
-        .style.display = "none";
+    if (myPlayer.hp <= 0) {
 
-    document
-        .getElementById("game-screen")
-        .style.display = "none";
-
-    document
-        .getElementById("lobby-screen")
-        .style.display = "flex";
-};
-
-
-// ==========================================
-// 꾸미기 열기
-// ==========================================
-
-window.openCustomize = function() {
-
-    document
-        .getElementById("lobby-screen")
-        .style.display = "none";
-
-    document
-        .getElementById("customize-screen")
-        .style.display = "flex";
-
-
-    renderSkinSlots();
-};
-
-
-// ==========================================
-// 꾸미기 닫기
-// ==========================================
-
-window.closeCustomize = function() {
-
-    document
-        .getElementById("customize-screen")
-        .style.display = "none";
-
-    document
-        .getElementById("lobby-screen")
-        .style.display = "flex";
-};
-
-
-// ==========================================
-// 스킨 슬롯 생성
-// ==========================================
-
-function renderSkinSlots() {
-
-    const grid =
-        document.getElementById("skin-grid");
-
-    if (!grid) return;
-
-    grid.innerHTML = "";
-
-
-    Object.entries(SKINS).forEach(
-        ([skinId, skin]) => {
-
-            const slot =
-                document.createElement("div");
-
-            slot.className = "skin-slot";
-
-
-            if (myPlayer.skinId === skinId) {
-                slot.classList.add("selected");
-            }
-
-
-            if (skin.image) {
-
-                const img =
-                    document.createElement("img");
-
-                img.src = skin.image;
-
-                img.alt = skin.name;
-
-                img.onerror = function() {
-
-                    this.style.display = "none";
-
-                    const placeholder =
-                        document.createElement("div");
-
-                    placeholder.className =
-                        "skin-placeholder";
-
-                    placeholder.textContent =
-                        "준비중";
-
-                    this.parentElement.insertBefore(
-                        placeholder,
-                        this
-                    );
-                };
-
-                slot.appendChild(img);
-
-            } else {
-
-                const placeholder =
-                    document.createElement("div");
-
-                placeholder.className =
-                    "skin-placeholder";
-
-                placeholder.textContent =
-                    "기본";
-
-                slot.appendChild(placeholder);
-            }
-
-
-            const name =
-                document.createElement("div");
-
-            name.className =
-                "skin-name";
-
-            name.textContent =
-                skin.name;
-
-            slot.appendChild(name);
-
-
-            slot.onclick = () => {
-
-                selectSkin(skinId);
-            };
-
-
-            grid.appendChild(slot);
-        }
-    );
-
-
-    updateCustomizePreview();
+        playerDeath();
+    }
 }
 
 
 // ==========================================
-// 스킨 선택
+// 사망
 // ==========================================
 
-function selectSkin(skinId) {
+function playerDeath() {
 
-    if (!SKINS[skinId]) return;
-
-
-    myPlayer.skinId =
-        skinId;
+    isGameStarted = false;
 
 
-    updateCustomizePreview();
+    effects.push({
+
+        x:
+            myPlayer.x +
+            myPlayer.size / 2,
+
+        y:
+            myPlayer.y +
+            myPlayer.size / 2,
+
+        radius: 70,
+
+        color:
+            "rgba(255,0,0,0.5)",
+
+        life: 40
+    });
 
 
-    renderSkinSlots();
+    setTimeout(() => {
+
+        myPlayer.hp =
+            myPlayer.maxHp;
+
+        myPlayer.x = 100;
+
+        myPlayer.y = 200;
 
 
-    // 로그인 계정만 저장
-    if (!isGuest) {
+        testMonster.x = 500;
 
-        const userRef =
-            ref(
-                db,
-                `users/${myPlayer.userId}`
-            );
-
-        set(userRef, {
-
-            nickname:
-                myPlayer.nickname,
-
-            charType:
-                myPlayer.charType,
-
-            skinId:
-                myPlayer.skinId,
-
-            level:
-                myPlayer.level,
-
-            exp:
-                myPlayer.exp,
-
-            maxExp:
-                myPlayer.maxExp,
-
-            hp:
-                myPlayer.hp,
-
-            maxHp:
-                myPlayer.maxHp
-        });
-    }
+        testMonster.y = 250;
 
 
-    updateLobbyUI();
-}
+        updateHPUI();
 
 
-// ==========================================
-// 꾸미기 미리보기
-// ==========================================
+        isGameStarted = true;
 
-function updateCustomizePreview() {
-
-    const preview =
-        document.getElementById(
-            "customize-preview-img"
-        );
-
-    const name =
-        document.getElementById(
-            "customize-preview-name"
-        );
-
-
-    if (!preview || !name) return;
-
-
-    const skin =
-        SKINS[myPlayer.skinId];
-
-
-    name.textContent =
-        skin ? skin.name : "기본 스킨";
-
-
-    if (skin && skin.image) {
-
-        preview.src =
-            skin.image;
-
-    } else {
-
-        preview.src =
-            myPlayer.charType === "char1"
-                ? "./gojo.png"
-                : "./luffy.png";
-    }
+    }, 1500);
 }
 
 
@@ -993,34 +681,37 @@ function updateCustomizePreview() {
 // ==========================================
 
 const btnAtk =
-    document.getElementById("btn-attack");
+    document.getElementById(
+        "btn-attack"
+    );
 
 const btnS1 =
-    document.getElementById("btn-skill1");
+    document.getElementById(
+        "btn-skill1"
+    );
 
 const btnS2 =
-    document.getElementById("btn-skill2");
+    document.getElementById(
+        "btn-skill2"
+    );
 
 
-if (btnAtk) {
+if (btnAtk)
     btnAtk.onclick =
         () => useSkill("attack");
-}
 
-if (btnS1) {
+if (btnS1)
     btnS1.onclick =
         () => useSkill("skill1");
-}
 
-if (btnS2) {
+if (btnS2)
     btnS2.onclick =
         () => useSkill("skill2");
-}
 
 
 function useSkill(type) {
 
-    if (!isGameStarted || isGameOver) return;
+    if (!isGameStarted) return;
 
 
     const isGojo =
@@ -1033,9 +724,9 @@ function useSkill(type) {
             : myPlayer.x - 60;
 
 
-    // =========================
+    // =====================================
     // 평타
-    // =========================
+    // =====================================
 
     if (type === "attack") {
 
@@ -1043,7 +734,8 @@ function useSkill(type) {
 
             x: attackX,
 
-            y: myPlayer.y + 20,
+            y:
+                myPlayer.y + 20,
 
             radius: 20,
 
@@ -1053,6 +745,7 @@ function useSkill(type) {
                     : "#ff3333",
 
             life: 10
+
         });
 
 
@@ -1086,7 +779,8 @@ function useSkill(type) {
 
 
             if (
-                (inRangeRight || inRangeLeft) &&
+                (inRangeRight ||
+                    inRangeLeft) &&
                 inVerticalRange
             ) {
 
@@ -1102,7 +796,8 @@ function useSkill(type) {
 
                 damageTexts.push({
 
-                    text: `-${damage}`,
+                    text:
+                        `-${damage}`,
 
                     x:
                         testMonster.x +
@@ -1114,19 +809,32 @@ function useSkill(type) {
                     life: 25,
 
                     color: "#ff3333"
+
                 });
+
+
+                // 에너지 획득
+                myPlayer.energy += 10;
+
+                if (
+                    myPlayer.energy >
+                    myPlayer.maxEnergy
+                ) {
+                    myPlayer.energy =
+                        myPlayer.maxEnergy;
+                }
+
+                updateEnergyUI();
             }
         }
-
-        return;
     }
 
 
-    // =========================
-    // 스킬1
-    // =========================
+    // =====================================
+    // 스킬 1
+    // =====================================
 
-    if (type === "skill1") {
+    else if (type === "skill1") {
 
         if (isGojo) {
 
@@ -1134,16 +842,6 @@ function useSkill(type) {
                 myPlayer.facing === "right"
                     ? myPlayer.x + 100
                     : myPlayer.x - 100;
-
-
-            myPlayer.x =
-                Math.max(
-                    0,
-                    Math.min(
-                        canvas.width - myPlayer.size,
-                        myPlayer.x
-                    )
-                );
 
 
             effects.push({
@@ -1158,6 +856,7 @@ function useSkill(type) {
                     "rgba(150,0,255,0.5)",
 
                 life: 15
+
             });
 
         } else {
@@ -1172,25 +871,25 @@ function useSkill(type) {
 
                 x: attackX,
 
-                y: myPlayer.y + 20,
+                y:
+                    myPlayer.y + 20,
 
                 radius: 30,
 
                 color: "#ff5500",
 
                 life: 15
+
             });
         }
-
-        return;
     }
 
 
-    // =========================
-    // 스킬2
-    // =========================
+    // =====================================
+    // 스킬 2
+    // =====================================
 
-    if (type === "skill2") {
+    else if (type === "skill2") {
 
         effects.push({
 
@@ -1211,6 +910,7 @@ function useSkill(type) {
                     : "rgba(255,200,0,0.5)",
 
             life: 20
+
         });
     }
 }
@@ -1222,7 +922,7 @@ function useSkill(type) {
 
 window.addEventListener(
     "keydown",
-    (e) => {
+    e => {
 
         const k =
             e.key.toLowerCase();
@@ -1253,7 +953,7 @@ window.addEventListener(
 
 window.addEventListener(
     "keyup",
-    (e) => {
+    e => {
 
         const k =
             e.key.toLowerCase();
@@ -1273,27 +973,29 @@ function bindControlBtn(
 ) {
 
     const btn =
-        document.getElementById(btnId);
+        document.getElementById(
+            btnId
+        );
 
     if (!btn) return;
 
 
-    const pressOn =
-        (e) => {
+    const pressOn = e => {
 
-            e.preventDefault();
+        e.preventDefault();
 
-            keysPressed[keyName] = true;
-        };
+        keysPressed[keyName] =
+            true;
+    };
 
 
-    const pressOff =
-        (e) => {
+    const pressOff = e => {
 
-            e.preventDefault();
+        e.preventDefault();
 
-            keysPressed[keyName] = false;
-        };
+        keysPressed[keyName] =
+            false;
+    };
 
 
     btn.addEventListener(
@@ -1313,6 +1015,7 @@ function bindControlBtn(
         pressOff,
         { passive: false }
     );
+
 
     btn.addEventListener(
         "mousedown",
@@ -1353,15 +1056,13 @@ bindControlBtn(
 
 
 // ==========================================
-// 플레이어 이동
+// 이동
 // ==========================================
 
 function updatePosition() {
 
-    if (
-        !isGameStarted ||
-        isGameOver
-    ) return;
+    if (!isGameStarted)
+        return;
 
 
     const speed = 2.5;
@@ -1398,7 +1099,8 @@ function updatePosition() {
 
         myPlayer.x -= speed;
 
-        myPlayer.facing = "left";
+        myPlayer.facing =
+            "left";
 
         moved = true;
     }
@@ -1411,37 +1113,56 @@ function updatePosition() {
 
         myPlayer.x += speed;
 
-        myPlayer.facing = "right";
+        myPlayer.facing =
+            "right";
 
         moved = true;
     }
 
 
-    myPlayer.x =
-        Math.max(
-            0,
-            Math.min(
-                canvas.width -
-                myPlayer.size,
-                myPlayer.x
-            )
+    // 960 x 540 기준 벽
+    if (myPlayer.x < 0)
+        myPlayer.x = 0;
+
+    if (myPlayer.y < 0)
+        myPlayer.y = 0;
+
+
+    if (
+        myPlayer.x >
+        canvas.width -
+        myPlayer.size
+    ) {
+
+        myPlayer.x =
+            canvas.width -
+            myPlayer.size;
+    }
+
+
+    if (
+        myPlayer.y >
+        canvas.height -
+        myPlayer.size
+    ) {
+
+        myPlayer.y =
+            canvas.height -
+            myPlayer.size;
+    }
+
+
+    // 게스트는 Firebase 저장 안 함
+    if (
+        moved &&
+        myRef &&
+        !isGuest
+    ) {
+
+        set(
+            myRef,
+            myPlayer
         );
-
-
-    myPlayer.y =
-        Math.max(
-            0,
-            Math.min(
-                canvas.height -
-                myPlayer.size,
-                myPlayer.y
-            )
-        );
-
-
-    if (moved) {
-
-        savePlayerToFirebase();
     }
 }
 
@@ -1455,9 +1176,10 @@ function updateMonsterAI() {
     if (
         !testMonster ||
         testMonster.hp <= 0 ||
-        !isGameStarted ||
-        isGameOver
-    ) return;
+        !isGameStarted
+    ) {
+        return;
+    }
 
 
     const distance =
@@ -1470,6 +1192,7 @@ function updateMonsterAI() {
         );
 
 
+    // 추적
     if (
         distance < 400 &&
         distance > 55
@@ -1525,118 +1248,26 @@ function updateMonsterAI() {
         testMonster.state =
             "IDLE";
     }
-}
 
 
-// ==========================================
-// 몬스터 공격
-// ==========================================
-
-function updateMonsterAttack() {
-
+    // 공격
     if (
-        !testMonster ||
-        testMonster.hp <= 0 ||
-        !isGameStarted ||
-        isGameOver
-    ) return;
-
-
-    const distance =
-        Math.hypot(
-            myPlayer.x -
-                testMonster.x,
-
-            myPlayer.y -
-                testMonster.y
-        );
-
-
-    if (distance > 60) {
-        return;
-    }
-
-
-    const now =
-        Date.now();
-
-
-    if (
-        now -
-        testMonster.lastAttackTime <
-        testMonster.attackCooldown
+        distance <= 55
     ) {
-        return;
+
+        if (
+            !testMonster.lastAttack ||
+            Date.now() -
+                testMonster.lastAttack >
+                1000
+        ) {
+
+            testMonster.lastAttack =
+                Date.now();
+
+            damagePlayer(10);
+        }
     }
-
-
-    testMonster.lastAttackTime =
-        now;
-
-
-    myPlayer.hp -=
-        testMonster.attackDamage;
-
-
-    if (myPlayer.hp < 0) {
-        myPlayer.hp = 0;
-    }
-
-
-    damageTexts.push({
-
-        text:
-            `-${testMonster.attackDamage}`,
-
-        x:
-            myPlayer.x +
-            myPlayer.size / 2,
-
-        y:
-            myPlayer.y - 10,
-
-        life: 25,
-
-        color: "#ff5555"
-    });
-
-
-    updateHUD();
-
-
-    savePlayerToFirebase();
-
-
-    if (myPlayer.hp <= 0) {
-
-        triggerGameOver();
-    }
-}
-
-
-// ==========================================
-// 게임오버
-// ==========================================
-
-function triggerGameOver() {
-
-    isGameOver = true;
-
-    isGameStarted = false;
-
-
-    Object.keys(keysPressed)
-        .forEach(
-            key =>
-                keysPressed[key] = false
-        );
-
-
-    document
-        .getElementById(
-            "game-over-screen"
-        )
-        .style.display = "flex";
 }
 
 
@@ -1646,10 +1277,16 @@ function triggerGameOver() {
 
 onValue(
     ref(db, "players"),
-    (snapshot) => {
+    snapshot => {
 
         players =
             snapshot.val() || {};
+
+
+        const statusEl =
+            document.getElementById(
+                "status"
+            );
 
 
         if (statusEl) {
@@ -1657,14 +1294,14 @@ onValue(
             statusEl.textContent =
                 `현재 서버 인원: ${
                     Object.keys(players).length
-                }명 접속 중`;
+                }명`;
         }
     }
 );
 
 
 // ==========================================
-// DRAW
+// 그리기
 // ==========================================
 
 function draw() {
@@ -1673,9 +1310,12 @@ function draw() {
 
     updateMonsterAI();
 
-    updateMonsterAttack();
+    updateHPUI();
+
+    updateEnergyUI();
 
 
+    // 배경 이미지 제거
     ctx.clearRect(
         0,
         0,
@@ -1684,38 +1324,20 @@ function draw() {
     );
 
 
-    // 배경
-    if (
-        bgImage &&
-        bgImage.complete &&
-        bgImage.naturalWidth !== 0
-    ) {
+    ctx.fillStyle =
+        "#111111";
 
-        ctx.drawImage(
-            bgImage,
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
-
-    } else {
-
-        ctx.fillStyle =
-            "#1a1a1a";
-
-        ctx.fillRect(
-            0,
-            0,
-            canvas.width,
-            canvas.height
-        );
-    }
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
 
-    // ======================================
+    // =====================================
     // 몬스터
-    // ======================================
+    // =====================================
 
     if (
         testMonster &&
@@ -1740,6 +1362,7 @@ function draw() {
 
         ctx.lineWidth = 2;
 
+
         ctx.strokeRect(
             testMonster.x,
             testMonster.y,
@@ -1748,26 +1371,63 @@ function draw() {
         );
 
 
-        // 이름
-        ctx.font =
-            "bold 11px 'Segoe UI', sans-serif";
+        const mText =
+            `[HP] ${
+                testMonster.hp
+            }/${
+                testMonster.maxHp
+            } ${
+                testMonster.name
+            }`;
 
-        ctx.textAlign =
-            "center";
+
+        ctx.font =
+            "bold 11px Segoe UI";
+
+
+        const mTextWidth =
+            ctx.measureText(
+                mText
+            ).width;
+
+
+        ctx.fillStyle =
+            "rgba(0,0,0,0.7)";
+
+
+        ctx.fillRect(
+            testMonster.x +
+                testMonster.size / 2 -
+                mTextWidth / 2 -
+                4,
+
+            testMonster.y - 32,
+
+            mTextWidth + 8,
+
+            16
+        );
 
 
         ctx.fillStyle =
             "#ffaa00";
 
+        ctx.textAlign =
+            "center";
+
+
         ctx.fillText(
-            testMonster.name,
+            mText,
+
             testMonster.x +
                 testMonster.size / 2,
-            testMonster.y - 22
+
+            testMonster.y - 20
         );
 
 
-        // HP바
+        // 몬스터 HP 바
+
         const barW = 50;
 
         const barH = 6;
@@ -1792,43 +1452,39 @@ function draw() {
         );
 
 
-        const hpPercent =
-            testMonster.hp /
-            testMonster.maxHp;
-
-
         ctx.fillStyle =
             "#00ff88";
+
 
         ctx.fillRect(
             barX,
             barY,
             barW *
-                Math.max(
-                    0,
-                    Math.min(
-                        1,
-                        hpPercent
-                    )
+                (
+                    testMonster.hp /
+                    testMonster.maxHp
                 ),
             barH
         );
     }
 
 
-    // ======================================
+    // =====================================
     // 플레이어
-    // ======================================
+    // =====================================
 
     Object.keys(players)
-        .forEach((id) => {
+        .forEach(id => {
 
             const p =
                 players[id];
 
 
             const charImg =
-                getCurrentCharacterImage(p);
+                CHAR_IMAGES[
+                    p.charType
+                ] ||
+                CHAR_IMAGES.char1;
 
 
             if (
@@ -1841,7 +1497,8 @@ function draw() {
 
 
                 if (
-                    p.facing === "left"
+                    p.facing ===
+                    "left"
                 ) {
 
                     ctx.translate(
@@ -1853,6 +1510,7 @@ function draw() {
                         -1,
                         1
                     );
+
 
                     ctx.drawImage(
                         charImg,
@@ -1879,14 +1537,18 @@ function draw() {
 
 
             // 닉네임
+
             const fullText =
-                `[Lv.${p.level || 1}] ${
-                    p.nickname || "익명"
+                `[Lv.${
+                    p.level || 1
+                }] ${
+                    p.nickname ||
+                    "익명"
                 }`;
 
 
             ctx.font =
-                "bold 12px 'Segoe UI', sans-serif";
+                "bold 12px Segoe UI";
 
 
             const textWidth =
@@ -1914,7 +1576,8 @@ function draw() {
 
 
             ctx.fillStyle =
-                id === myPlayer.userId
+                id ===
+                myPlayer.userId
                     ? "#00ff88"
                     : "#ffffff";
 
@@ -1932,63 +1595,12 @@ function draw() {
                 p.y - 6
             );
 
-
-            // 플레이어 HP바
-            if (
-                p.hp !== undefined &&
-                p.maxHp
-            ) {
-
-                const hpW = 45;
-
-                const hpH = 5;
-
-                const hpX =
-                    p.x +
-                    p.size / 2 -
-                    hpW / 2;
-
-                const hpY =
-                    p.y +
-                    p.size +
-                    4;
-
-
-                ctx.fillStyle =
-                    "#333";
-
-                ctx.fillRect(
-                    hpX,
-                    hpY,
-                    hpW,
-                    hpH
-                );
-
-
-                ctx.fillStyle =
-                    "#ff3333";
-
-                ctx.fillRect(
-                    hpX,
-                    hpY,
-                    hpW *
-                        Math.max(
-                            0,
-                            Math.min(
-                                1,
-                                p.hp /
-                                    p.maxHp
-                            )
-                        ),
-                    hpH
-                );
-            }
         });
 
 
-    // ======================================
+    // =====================================
     // 스킬 이펙트
-    // ======================================
+    // =====================================
 
     for (
         let i = effects.length - 1;
@@ -2002,6 +1614,7 @@ function draw() {
 
         ctx.beginPath();
 
+
         ctx.arc(
             eff.x,
             eff.y,
@@ -2013,6 +1626,7 @@ function draw() {
 
         ctx.fillStyle =
             eff.color;
+
 
         ctx.fill();
 
@@ -2032,12 +1646,13 @@ function draw() {
     }
 
 
-    // ======================================
+    // =====================================
     // 데미지 텍스트
-    // ======================================
+    // =====================================
 
     for (
-        let i = damageTexts.length - 1;
+        let i =
+            damageTexts.length - 1;
         i >= 0;
         i--
     ) {
@@ -2047,10 +1662,12 @@ function draw() {
 
 
         ctx.font =
-            "bold 14px 'Segoe UI', sans-serif";
+            "bold 14px Segoe UI";
+
 
         ctx.fillStyle =
             dt.color;
+
 
         ctx.textAlign =
             "center";
@@ -2080,10 +1697,10 @@ function draw() {
     }
 
 
-    requestAnimationFrame(draw);
+    requestAnimationFrame(
+        draw
+    );
 }
 
-
-updateHUD();
 
 draw();
