@@ -3,93 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- 캐시 방지 -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>실시간 멀티플레이어 RPG 게임</title>
+    <title>멀티플레이어 액션 게임</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- 잠수(AFK) 화면 -->
-    <div id="afk-screen">
-        <h1>연결이 종료되었습니다 💤</h1>
-        <button class="primary-btn" style="width: 250px;" onclick="location.reload()">새로고침 후 재접속</button>
-    </div>
+    <!-- 1. 로그인 / 캐릭터 선택 화면 -->
+    <div id="setup-screen" class="screen">
+        <div class="login-container">
+            <h1>CHRONO MULTI</h1>
+            <p>숫자 4자리 PIN 코드를 입력하거나 게스트로 시작하세요.</p>
+            
+            <div class="input-group">
+                <input type="password" id="user-pin" placeholder="PIN 코드 4자리 (예: 1234)" maxlength="4">
+                <input type="text" id="user-nickname" placeholder="신규 닉네임 입력 (최초 1회)">
+            </div>
 
-    <!-- 4자리 PIN 코드 접속 화면 -->
-    <div id="setup-screen" class="overlay-screen">
-        <div id="login-box">
-            <h2>🔑 4자리 코드로 접속</h2>
-            <div class="input-group">
-                <input type="password" id="user-pin" maxlength="4" placeholder="4자리 숫자" style="text-align:center; font-size:20px; letter-spacing:5px;">
-            </div>
-            <div class="input-group">
-                <input type="text" id="user-nickname" placeholder="닉네임 (처음 접속시)" maxlength="8">
-            </div>
-            <div class="input-group">
-                <div class="char-container">
+            <div class="char-select-box">
+                <p>초기 캐릭터 선택</p>
+                <div class="char-cards">
                     <div class="char-card selected" id="card-char1" onclick="selectInitialChar('char1')">
-                        <div class="char-img-box"><img src="./gojo.png" alt="고조사토루"></div>
-                        <span class="char-name">고조사토루</span>
+                        <img src="./gojo.png" alt="고죠">
+                        <span>고죠</span>
                     </div>
                     <div class="char-card" id="card-char2" onclick="selectInitialChar('char2')">
-                        <div class="char-img-box"><img src="./luffy.png" alt="루피"></div>
-                        <span class="char-name">루피</span>
+                        <img src="./luffy.png" alt="루피">
+                        <span>루피</span>
                     </div>
                 </div>
             </div>
-            <button class="primary-btn" onclick="handlePinLogin()">게임 접속</button>
+
+            <button class="btn-primary" onclick="handlePinLogin()">PIN 접속 / 회원가입</button>
+            <button class="btn-guest" onclick="handleGuestLogin()">⚡ 게스트로 시작</button>
         </div>
     </div>
 
-    <!-- 대기실(로비) 화면 -->
-    <div id="lobby-screen" class="overlay-screen">
-        <div id="user-profile-bar">
-            <img id="profile-avatar" src="" alt="프로필">
-            <div id="profile-info">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span id="profile-level-badge">Lv.1</span>
-                    <span id="profile-nickname">닉네임</span>
+    <!-- 2. 로비 화면 -->
+    <div id="lobby-screen" class="screen" style="display: none;">
+        <div class="lobby-container">
+            <h2>대기실 (Lobby)</h2>
+            <div class="profile-card">
+                <img id="profile-avatar" src="./gojo.png" alt="프로필">
+                <div class="profile-info">
+                    <span id="profile-nickname">익명</span>
+                    <span id="profile-level-badge" class="badge">Lv.1</span>
                 </div>
             </div>
-        </div>
-        <div class="lobby-menu">
-            <button class="action-btn start-btn" onclick="enterGame()">🎮 게임 입장하기</button>
+            <button class="btn-primary" onclick="enterGame()">🎮 게임 입장하기</button>
+            <button class="btn-sub" onclick="openCustomization()">🎨 꾸미기</button>
         </div>
     </div>
 
-    <!-- 게임 화면 -->
-    <div id="game-screen">
-        <div id="ingame-hud">
-            <span id="hud-level">Lv.1</span>
-            <!-- 에너지 게이지 바 추가 -->
-            <div class="exp-bar-container" style="width: 150px; background-color: #333; border-color: #ffaa00;">
-                <div id="hud-energy-fill" class="exp-bar-fill" style="width: 0%; background: linear-gradient(90deg, #ffcc00, #ff5500);"></div>
-                <span id="hud-energy-text" class="exp-bar-text">에너지 0% (폭주 준비중)</span>
-            </div>
-        </div>
-        
-        <div id="game-container">
-            <canvas id="gameCanvas" width="800" height="450"></canvas>
-        </div>
-
-        <div id="status">서버 연결 중...</div>
-
-        <!-- 모바일 조작부 -->
-        <div id="controls-container">
-            <div id="dpad">
-                <div class="dpad-btn" id="btn-up">▲</div>
-                <div class="dpad-btn" id="btn-left">◀</div>
-                <div class="dpad-btn" id="btn-right">▶</div>
-                <div class="dpad-btn" id="btn-down">▼</div>
+    <!-- 2-1. 꾸미기 화면 -->
+    <div id="customization-screen" class="screen" style="display: none;">
+        <div class="custom-container">
+            <h2>캐릭터 꾸미기 (스킨)</h2>
+            <div class="preview-box">
+                <p>현재 적용된 스킨</p>
+                <img id="preview-avatar" src="./gojo.png" alt="미리보기">
+                <span id="preview-skin-name">기본 스킨</span>
             </div>
             
-            <!-- 스킬 버튼부 -->
-            <div id="skill-pad">
-                <div class="skill-btn" id="btn-attack" style="background:#ddd; color:#000;">👊<br><small>평타</small></div>
-                <div class="skill-btn" id="btn-skill1" style="background:#00b8ff;">⚡<br><small>스킬1</small></div>
-                <div class="skill-btn" id="btn-skill2" style="background:#ff3366;">🔥<br><small>스킬2</small></div>
+            <div class="skin-grid">
+                <div class="skin-card selected" onclick="selectSkin('skin1')">
+                    <div class="skin-img-box"><span>기본</span></div>
+                    <p>기본 스킨</p>
+                    <small>준비중</small>
+                </div>
+                <div class="skin-card" onclick="selectSkin('skin2')">
+                    <div class="skin-img-box"><span>스킨2</span></div>
+                    <p>스킨 2</p>
+                    <small>준비중</small>
+                </div>
+                <div class="skin-card" onclick="selectSkin('skin3')">
+                    <div class="skin-img-box"><span>스킨3</span></div>
+                    <p>스킨 3</p>
+                    <small>준비중</small>
+                </div>
             </div>
+
+            <button class="btn-sub" onclick="closeCustomization()">← 돌아가기</button>
+        </div>
+    </div>
+
+    <!-- 3. 게임 플레이 화면 -->
+    <div id="game-screen" class="screen" style="display: none;">
+        <div id="game-hud">
+            <span id="hud-level">Lv.1</span>
+            <div class="hud-hp-box">
+                <span id="hud-hp-label">❤️ HP</span>
+                <div class="hp-bar-bg">
+                    <div id="hp-fill"></div>
+                </div>
+                <span id="hp-text">100 / 100</span>
+            </div>
+            <span id="status">서버 연결 중...</span>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+        <!-- 모바일 가상 패드 및 스킬 버튼 -->
+        <div id="mobile-controls">
+            <div class="d-pad">
+                <button class="d-btn" id="btn-up">▲</button>
+                <div class="d-mid">
+                    <button class="d-btn" id="btn-left">◀</button>
+                    <button class="d-btn" id="btn-right">▶</button>
+                </div>
+                <button class="d-btn" id="btn-down">▼</button>
+            </div>
+            <div class="skill-btns">
+                <button class="skill-btn" id="btn-attack">⚔️</button>
+                <button class="skill-btn" id="btn-skill1">✨</button>
+                <button class="skill-btn" id="btn-skill2">🔥</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 오버 화면 -->
+    <div id="gameover-screen" class="screen" style="display: none;">
+        <div class="gameover-container">
+            <h1 class="glow-red">GAME OVER</h1>
+            <p>몬스터에게 쓰러졌습니다.</p>
+            <button class="btn-primary" onclick="restartGame()">다시 시작</button>
         </div>
     </div>
 
