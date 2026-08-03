@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, remove, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// 1. 완벽한 파이어베이스 설정 (절대 안 건드림!)
+// 1. 파이어베이스 설정
 const firebaseConfig = {
     apiKey: "AIzaSyDI2REmsCMwoaaV4xndPZKpX_EUntnCGk4",
     authDomain: "croos-9aafb.firebaseapp.com",
@@ -24,7 +24,7 @@ const CHAR_IMAGES = { char1: new Image(), char2: new Image() };
 CHAR_IMAGES.char1.src = "./gojo.png";
 CHAR_IMAGES.char2.src = "./luffy.png";
 
-// 2. 내 캐릭터 상태 (전투 스탯 포함)
+// 2. 내 캐릭터 상태
 let myPlayer = {
     userId: "", nickname: "익명", charType: "char1",
     level: 1, exp: 0, maxExp: 100,
@@ -42,13 +42,13 @@ let dummyBoss = { x: 400, y: 200, size: 70, hp: 5000, maxHp: 5000 };
 let effects = []; 
 let damageTexts = [];
 
+// 전역 함수 등록 (HTML onclick 연동용)
 window.selectInitialChar = function(charType) {
     myPlayer.charType = charType;
     document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
     document.getElementById(`card-${charType}`).classList.add('selected');
 };
 
-// 3. 완벽하게 복구된 DB 로그인 로직!
 window.handlePinLogin = function() {
     const pin = document.getElementById('user-pin').value.trim();
     const inputNickname = document.getElementById('user-nickname').value.trim();
@@ -60,7 +60,6 @@ window.handlePinLogin = function() {
 
     const userRef = ref(db, `users/PIN_${pin}`);
     
-    // DB 조회 시작
     get(userRef).then((snapshot) => {
         if (snapshot.exists()) {
             const userData = snapshot.val();
@@ -83,7 +82,6 @@ window.handlePinLogin = function() {
             myPlayer.exp = 0;
             myPlayer.maxExp = 100;
 
-            // 새 유저 DB에 저장
             set(userRef, {
                 nickname: myPlayer.nickname,
                 charType: myPlayer.charType,
@@ -105,7 +103,7 @@ window.handlePinLogin = function() {
         
     }).catch((error) => {
         console.error("DB 에러:", error);
-        alert("데이터베이스 연결 실패! 파이어베이스 권한(Rules)이 막혀있을 수 있습니다.\n에러: " + error.message);
+        alert("데이터베이스 연결 실패! 에러: " + error.message);
     });
 };
 
@@ -215,19 +213,46 @@ function useSkill(type) {
 }
 
 // ==========================================
-// 🎮 이동 및 그리기 로직
+// 🎮 이동 및 조작 로직 (마우스 & 모바일 터치 완벽 대응)
 // ==========================================
-window.addEventListener("keydown", (e) => keysPressed[e.key] = true);
-window.addEventListener("keyup", (e) => keysPressed[e.key] = false);
+window.addEventListener("keydown", (e) => {
+    if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
+        e.preventDefault();
+    }
+    keysPressed[e.key] = true;
+});
 
-function bindTouchBtn(btnId, keyName) {
+window.addEventListener("keyup", (e) => {
+    keysPressed[e.key] = false;
+});
+
+function bindControlBtn(btnId, keyName) {
     const btn = document.getElementById(btnId);
     if (!btn) return;
-    btn.addEventListener("touchstart", (e) => { e.preventDefault(); keysPressed[keyName] = true; }, { passive: false });
-    btn.addEventListener("touchend", (e) => { e.preventDefault(); keysPressed[keyName] = false; }, { passive: false });
+
+    const pressOn = (e) => {
+        e.preventDefault();
+        keysPressed[keyName] = true;
+    };
+
+    const pressOff = (e) => {
+        e.preventDefault();
+        keysPressed[keyName] = false;
+    };
+
+    btn.addEventListener("touchstart", pressOn, { passive: false });
+    btn.addEventListener("touchend", pressOff, { passive: false });
+    btn.addEventListener("touchcancel", pressOff, { passive: false });
+    
+    btn.addEventListener("mousedown", pressOn);
+    btn.addEventListener("mouseup", pressOff);
+    btn.addEventListener("mouseleave", pressOff);
 }
-bindTouchBtn("btn-up", "ArrowUp"); bindTouchBtn("btn-down", "ArrowDown");
-bindTouchBtn("btn-left", "ArrowLeft"); bindTouchBtn("btn-right", "ArrowRight");
+
+bindControlBtn("btn-up", "ArrowUp");
+bindControlBtn("btn-down", "ArrowDown");
+bindControlBtn("btn-left", "ArrowLeft");
+bindControlBtn("btn-right", "ArrowRight");
 
 function updatePosition() {
     if (!isGameStarted) return;
@@ -238,6 +263,12 @@ function updatePosition() {
     if (keysPressed["ArrowDown"]) { myPlayer.y += speed; moved = true; }
     if (keysPressed["ArrowLeft"]) { myPlayer.x -= speed; myPlayer.facing = 'left'; moved = true; }
     if (keysPressed["ArrowRight"]) { myPlayer.x += speed; myPlayer.facing = 'right'; moved = true; }
+
+    // 캔버스 벽 처리
+    if (myPlayer.x < 0) myPlayer.x = 0;
+    if (myPlayer.y < 0) myPlayer.y = 0;
+    if (myPlayer.x > canvas.width - myPlayer.size) myPlayer.x = canvas.width - myPlayer.size;
+    if (myPlayer.y > canvas.height - myPlayer.size) myPlayer.y = canvas.height - myPlayer.size;
 
     if (moved && myRef) {
         set(myRef, {
