@@ -45,7 +45,7 @@ let myRef = null;
 let effects = []; 
 let damageTexts = [];
 
-// [2단계 업데이트] 테스트 몬스터 객체 (AI 이동, 속도, 상태 속성 추가)
+// 테스트 몬스터 객체
 let testMonster = {
     id: "monster_1",
     name: "테스트 몬스터",
@@ -54,8 +54,8 @@ let testMonster = {
     size: 45,
     hp: 100,
     maxHp: 100,
-    speed: 1.2,        // 플레이어(2.5)보다 느린 이동 속도
-    state: "IDLE",     // "IDLE" (대기) 또는 "CHASE" (추적)
+    speed: 1.2,        // 이동 속도
+    state: "IDLE",     // "IDLE" 또는 "CHASE"
     facing: 'left'
 };
 
@@ -264,57 +264,34 @@ function updatePosition() {
     }
 }
 
-// [2단계 추가] 테스트 몬스터 AI 이동 로직 함수
+// 수정된 테스트 몬스터 AI 이동 로직 함수 (내 플레이어 좌표 기준 확실한 추적)
 function updateMonsterAI() {
-    if (!testMonster || testMonster.hp <= 0) return;
+    if (!testMonster || testMonster.hp <= 0 || !isGameStarted) return;
 
-    // 가장 가까운 타겟(플레이어들 중) 찾기
-    let target = null;
-    let minDistance = Infinity;
+    // 내 플레이어와의 거리 계산
+    let distance = Math.hypot(myPlayer.x - testMonster.x, myPlayer.y - testMonster.y);
 
-    // 내 플레이어 기준 거리 체크
-    if (isGameStarted) {
-        let dist = Math.hypot(myPlayer.x - testMonster.x, myPlayer.y - testMonster.y);
-        minDistance = dist;
-        target = myPlayer;
-    }
+    // 인식 범위 안이고 정지 거리(55px)보다 멀다면 추적
+    if (distance < 400 && distance > 55) {
+        testMonster.state = "CHASE";
 
-    // 다른 접속 플레이어들도 탐색하여 더 가까운 대상이 있다면 타겟 변경
-    Object.keys(players).forEach((id) => {
-        if (id === myPlayer.userId) return;
-        const p = players[id];
-        let dist = Math.hypot(p.x - testMonster.x, p.y - testMonster.y);
-        if (dist < minDistance) {
-            minDistance = dist;
-            target = p;
+        // X축 이동
+        if (testMonster.x < myPlayer.x) {
+            testMonster.x += testMonster.speed;
+            testMonster.facing = 'right';
+        } else if (testMonster.x > myPlayer.x) {
+            testMonster.x -= testMonster.speed;
+            testMonster.facing = 'left';
         }
-    });
 
-    // 추적 및 정지 로직 (인식 범위: 300픽셀 이내, 공격/정지 거리: 55픽셀 이내)
-    if (target && minDistance < 300) {
-        if (minDistance > 55) {
-            testMonster.state = "CHASE";
-            
-            // X, Y 방향으로 플레이어 향해 천천히 이동
-            if (testMonster.x < target.x) {
-                testMonster.x += testMonster.speed;
-                testMonster.facing = 'right';
-            } else if (testMonster.x > target.x) {
-                testMonster.x -= testMonster.speed;
-                testMonster.facing = 'left';
-            }
-
-            if (testMonster.y < target.y) {
-                testMonster.y += testMonster.speed;
-            } else if (testMonster.y > target.y) {
-                testMonster.y -= testMonster.speed;
-            }
-        } else {
-            // 충분히 가까워지면 대기(IDLE) 상태로 전환하고 멈춤
-            testMonster.state = "IDLE";
+        // Y축 이동
+        if (testMonster.y < myPlayer.y) {
+            testMonster.y += testMonster.speed;
+        } else if (testMonster.y > myPlayer.y) {
+            testMonster.y -= testMonster.speed;
         }
     } else {
-        // 플레이어가 멀리 있거나 없으면 대기 상태
+        // 너무 가까워지거나 멀어지면 대기 상태
         testMonster.state = "IDLE";
     }
 }
@@ -328,7 +305,7 @@ onValue(ref(db, 'players'), (snapshot) => {
 
 function draw() {
     updatePosition();
-    updateMonsterAI(); // [2단계 추가] 매 프레임마다 몬스터 AI 업데이트 실행
+    updateMonsterAI(); // 매 프레임 루프에서 실행 확인
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -344,7 +321,7 @@ function draw() {
     if (testMonster && testMonster.hp > 0) {
         ctx.fillStyle = "#ff4444";
         ctx.fillRect(testMonster.x, testMonster.y, testMonster.size, testMonster.size);
-        ctx.strokeStyle = testMonster.state === "CHASE" ? "#ffff00" : "#ffffff"; // 추적 중일 때 테두리 노란색으로 표시 확인 가능
+        ctx.strokeStyle = testMonster.state === "CHASE" ? "#ffff00" : "#ffffff"; 
         ctx.lineWidth = 2;
         ctx.strokeRect(testMonster.x, testMonster.y, testMonster.size, testMonster.size);
 
