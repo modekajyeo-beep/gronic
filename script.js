@@ -1,11 +1,16 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, remove, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
+// 1. 완벽한 파이어베이스 설정 (절대 안 건드림!)
 const firebaseConfig = {
     apiKey: "AIzaSyDI2REmsCMwoaaV4xndPZKpX_EUntnCGk4",
     authDomain: "croos-9aafb.firebaseapp.com",
     databaseURL: "https://croos-9aafb-default-rtdb.firebaseio.com",
-    projectId: "croos-9aafb"
+    projectId: "croos-9aafb",
+    storageBucket: "croos-9aafb.firebasestorage.app",
+    messagingSenderId: "314607076707",
+    appId: "1:314607076707:web:f15984e304272721e47f56",
+    measurementId: "G-K8JR2FBWBY"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -13,26 +18,27 @@ const db = getDatabase(app);
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const statusEl = document.getElementById("status");
 
 const CHAR_IMAGES = { char1: new Image(), char2: new Image() };
 CHAR_IMAGES.char1.src = "./gojo.png";
 CHAR_IMAGES.char2.src = "./luffy.png";
 
-// ⚔️ 전투 관련 상태
+// 2. 내 캐릭터 상태 (전투 스탯 포함)
 let myPlayer = {
     userId: "", nickname: "익명", charType: "char1",
-    level: 1, x: 100, y: 200, size: 55, facing: 'right',
+    level: 1, exp: 0, maxExp: 100,
+    x: 100, y: 200, size: 55, facing: 'right',
     energy: 0, maxEnergy: 100, combo: 0
 };
+
 let players = {};
 const keysPressed = {};
 let isGameStarted = false;
 let myRef = null;
 
-// 🎯 전투 타겟 (샌드백 몬스터)
+// 🎯 샌드백 보스 및 이펙트 설정
 let dummyBoss = { x: 400, y: 200, size: 70, hp: 5000, maxHp: 5000 };
-
-// 💥 시각 효과 및 데미지 텍스트
 let effects = []; 
 let damageTexts = [];
 
@@ -42,12 +48,65 @@ window.selectInitialChar = function(charType) {
     document.getElementById(`card-${charType}`).classList.add('selected');
 };
 
+// 3. 완벽하게 복구된 DB 로그인 로직!
 window.handlePinLogin = function() {
     const pin = document.getElementById('user-pin').value.trim();
-    if(pin.length !== 4) return alert("4자리 숫자를 입력하세요.");
-    myPlayer.userId = `PIN_${pin}`;
-    document.getElementById("setup-screen").style.display = "none";
-    document.getElementById("lobby-screen").style.display = "flex";
+    const inputNickname = document.getElementById('user-nickname').value.trim();
+
+    if(pin.length !== 4 || isNaN(pin)) {
+        alert("숫자 4자리 코드를 정확히 입력해 주세요! (예: 1234)");
+        return;
+    }
+
+    const userRef = ref(db, `users/PIN_${pin}`);
+    
+    // DB 조회 시작
+    get(userRef).then((snapshot) => {
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            myPlayer.userId = `PIN_${pin}`;
+            myPlayer.nickname = userData.nickname;
+            myPlayer.charType = userData.charType || "char1";
+            myPlayer.level = userData.level || 1;
+            myPlayer.exp = userData.exp || 0;
+            myPlayer.maxExp = userData.maxExp || 100;
+            
+            alert(`👋 환영합니다, ${myPlayer.nickname}님! 데이터를 성공적으로 불러왔습니다.`);
+        } else {
+            if(!inputNickname) {
+                alert("이 코드는 처음 접속하는 코드입니다!\n'닉네임'을 먼저 입력하고 접속을 눌러주세요.");
+                return;
+            }
+            myPlayer.userId = `PIN_${pin}`;
+            myPlayer.nickname = inputNickname;
+            myPlayer.level = 1;
+            myPlayer.exp = 0;
+            myPlayer.maxExp = 100;
+
+            // 새 유저 DB에 저장
+            set(userRef, {
+                nickname: myPlayer.nickname,
+                charType: myPlayer.charType,
+                level: 1, exp: 0, maxExp: 100
+            });
+            alert(`🎉 신규 캐릭터 [${myPlayer.nickname}] 생성 완료!`);
+        }
+
+        // 로비 UI 업데이트
+        document.getElementById("profile-nickname").textContent = myPlayer.nickname;
+        document.getElementById("profile-level-badge").textContent = `Lv.${myPlayer.level}`;
+        document.getElementById("profile-avatar").src = myPlayer.charType === 'char1' ? "./gojo.png" : "./luffy.png";
+        
+        const hudLevelEl = document.getElementById("hud-level");
+        if(hudLevelEl) hudLevelEl.textContent = `Lv.${myPlayer.level}`;
+
+        document.getElementById("setup-screen").style.display = "none";
+        document.getElementById("lobby-screen").style.display = "flex";
+        
+    }).catch((error) => {
+        console.error("DB 에러:", error);
+        alert("데이터베이스 연결 실패! 파이어베이스 권한(Rules)이 막혀있을 수 있습니다.\n에러: " + error.message);
+    });
 };
 
 window.enterGame = function() {
@@ -60,43 +119,42 @@ window.enterGame = function() {
 };
 
 // ==========================================
-// 🔥 전투 스킬 시스템 로직
+// 🔥 전투 스킬 시스템 로직 
 // ==========================================
-
 function updateEnergyUI() {
     const percent = Math.min(100, (myPlayer.energy / myPlayer.maxEnergy) * 100);
-    document.getElementById("hud-energy-fill").style.width = `${percent}%`;
-    
+    const fillEl = document.getElementById("hud-energy-fill");
     const textEl = document.getElementById("hud-energy-text");
-    if(percent >= 100) {
-        textEl.textContent = "🔥 치명타 장전 완료! (다음 공격 강력함)";
-        textEl.style.color = "#ffff00";
-    } else {
-        textEl.textContent = `에너지 ${Math.floor(percent)}% (맞출수록 증가)`;
-        textEl.style.color = "#fff";
+    
+    if (fillEl) fillEl.style.width = `${percent}%`;
+    
+    if (textEl) {
+        if(percent >= 100) {
+            textEl.textContent = "🔥 치명타 장전 완료!";
+            textEl.style.color = "#ffff00";
+        } else {
+            textEl.textContent = `에너지 ${Math.floor(percent)}%`;
+            textEl.style.color = "#fff";
+        }
     }
 }
 
-// 스킬 명중 시 처리 (데미지 계산, 콤보, 크리티컬)
 function hitTarget(baseDmg, hitX, hitY) {
     myPlayer.combo++;
-    
-    // 1. 게이지 비례 크리티컬 확률 (최대 게이지면 100% 크리티컬)
     let isCrit = false;
-    let finalDmg = baseDmg + (myPlayer.combo * 2); // 콤보 누적 딜 상승
+    let finalDmg = baseDmg + (myPlayer.combo * 2);
     
     if (myPlayer.energy >= myPlayer.maxEnergy) {
         isCrit = true;
-        myPlayer.energy = 0; // 게이지 소모
-        finalDmg *= 3; // 폭발 딜
+        myPlayer.energy = 0; 
+        finalDmg *= 3; 
     } else {
-        myPlayer.energy = Math.min(myPlayer.maxEnergy, myPlayer.energy + 15); // 타격시 게이지 충전
+        myPlayer.energy = Math.min(myPlayer.maxEnergy, myPlayer.energy + 15);
     }
 
     dummyBoss.hp -= finalDmg;
-    if(dummyBoss.hp < 0) dummyBoss.hp = dummyBoss.maxHp; // 샌드백 리필
+    if(dummyBoss.hp < 0) dummyBoss.hp = dummyBoss.maxHp; 
 
-    // 텍스트 생성
     damageTexts.push({
         x: hitX + (Math.random()*40 - 20),
         y: hitY - 20,
@@ -109,45 +167,41 @@ function hitTarget(baseDmg, hitX, hitY) {
     updateEnergyUI();
 }
 
-// 버튼 클릭 이벤트 바인딩
-document.getElementById("btn-attack").onclick = () => useSkill("attack");
-document.getElementById("btn-skill1").onclick = () => useSkill("skill1");
-document.getElementById("btn-skill2").onclick = () => useSkill("skill2");
+// 스킬 버튼 이벤트 연동
+const btnAtk = document.getElementById("btn-attack");
+const btnS1 = document.getElementById("btn-skill1");
+const btnS2 = document.getElementById("btn-skill2");
+
+if(btnAtk) btnAtk.onclick = () => useSkill("attack");
+if(btnS1) btnS1.onclick = () => useSkill("skill1");
+if(btnS2) btnS2.onclick = () => useSkill("skill2");
 
 function useSkill(type) {
     if(!isGameStarted) return;
     
     const isGojo = myPlayer.charType === "char1";
     let attackX = myPlayer.facing === 'right' ? myPlayer.x + 60 : myPlayer.x - 60;
-    
-    // 거리 계산 (기획하신 패시브 연동용)
     const dist = Math.hypot(dummyBoss.x - myPlayer.x, dummyBoss.y - myPlayer.y);
     let hitSuccess = false;
 
     if (type === "attack") {
-        // 평타: 짧은 거리 공격
         effects.push({ x: attackX, y: myPlayer.y + 20, radius: 20, color: isGojo?"#00ffff":"#ff3333", life: 10 });
         if (dist < 100) hitSuccess = true;
-
     } else if (type === "skill1") {
         if(isGojo) {
-            // 고조 스킬1: 공간 대쉬 (적 통과 + 딜)
             myPlayer.x = myPlayer.facing === 'right' ? myPlayer.x + 150 : myPlayer.x - 150;
             effects.push({ x: myPlayer.x, y: myPlayer.y, radius: 40, color: "rgba(150, 0, 255, 0.5)", life: 15 });
             if (dist < 180) hitSuccess = true;
         } else {
-            // 루피 스킬1: 고무 펀치 (긴 사거리)
             attackX = myPlayer.facing === 'right' ? myPlayer.x + 150 : myPlayer.x - 150;
             effects.push({ x: attackX, y: myPlayer.y + 20, radius: 30, color: "#ff5500", life: 15 });
             if (dist < 200) hitSuccess = true;
         }
     } else if (type === "skill2") {
         if(isGojo) {
-            // 고조 스킬2: 압축 붕괴 (제자리 넓은 폭발)
             effects.push({ x: myPlayer.x + 25, y: myPlayer.y + 25, radius: 100, color: "rgba(100, 0, 255, 0.6)", life: 20 });
             if (dist < 120) hitSuccess = true;
         } else {
-            // 루피 스킬2: 동료 호출 (넓은 범위 타격)
             effects.push({ x: dummyBoss.x + 25, y: dummyBoss.y + 25, radius: 120, color: "rgba(255, 200, 0, 0.5)", life: 20 });
             if (dist < 300) hitSuccess = true;
         }
@@ -156,14 +210,13 @@ function useSkill(type) {
     if(hitSuccess) {
         hitTarget(isGojo ? 20 : 25, dummyBoss.x, dummyBoss.y);
     } else {
-        myPlayer.combo = 0; // 허공에 치면 콤보 끊김
+        myPlayer.combo = 0; 
     }
 }
 
 // ==========================================
 // 🎮 이동 및 그리기 로직
 // ==========================================
-
 window.addEventListener("keydown", (e) => keysPressed[e.key] = true);
 window.addEventListener("keyup", (e) => keysPressed[e.key] = false);
 
@@ -186,31 +239,49 @@ function updatePosition() {
     if (keysPressed["ArrowLeft"]) { myPlayer.x -= speed; myPlayer.facing = 'left'; moved = true; }
     if (keysPressed["ArrowRight"]) { myPlayer.x += speed; myPlayer.facing = 'right'; moved = true; }
 
-    if (moved && myRef) set(myRef, myPlayer);
+    if (moved && myRef) {
+        set(myRef, {
+            userId: myPlayer.userId,
+            nickname: myPlayer.nickname,
+            charType: myPlayer.charType,
+            level: myPlayer.level,
+            x: myPlayer.x,
+            y: myPlayer.y,
+            size: myPlayer.size,
+            facing: myPlayer.facing
+        });
+    }
 }
 
-onValue(ref(db, 'players'), (snapshot) => { players = snapshot.val() || {}; });
+onValue(ref(db, 'players'), (snapshot) => { 
+    players = snapshot.val() || {}; 
+    if (statusEl) {
+        statusEl.textContent = `현재 서버 인원: ${Object.keys(players).length}명 접속 중`;
+    }
+});
 
 function draw() {
     updatePosition();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. 샌드백(더미) 그리기
+    // 1. 샌드백 그리기
     ctx.fillStyle = "#555";
     ctx.fillRect(dummyBoss.x, dummyBoss.y, dummyBoss.size, dummyBoss.size);
     ctx.fillStyle = "red";
     ctx.fillRect(dummyBoss.x, dummyBoss.y - 15, (dummyBoss.hp / dummyBoss.maxHp) * dummyBoss.size, 8);
     ctx.fillStyle = "#fff";
     ctx.font = "bold 14px sans-serif";
-    ctx.fillText("전투 샌드백", dummyBoss.x, dummyBoss.y - 20);
+    ctx.textAlign = "center";
+    ctx.fillText("전투 샌드백", dummyBoss.x + dummyBoss.size/2, dummyBoss.y - 20);
 
-    // 2. 다른 플레이어 및 내 캐릭터 그리기
+    // 2. 캐릭터 그리기
     Object.keys(players).forEach((id) => {
         const p = players[id];
-        const charImg = CHAR_IMAGES[p.charType];
-        if (charImg && charImg.complete) {
+        const charImg = CHAR_IMAGES[p.charType] || CHAR_IMAGES.char1;
+        
+        if (charImg && charImg.complete && charImg.naturalWidth !== 0) {
             ctx.save();
-            if(p.facing === 'left') { // 왼쪽 볼 때 이미지 반전
+            if(p.facing === 'left') {
                 ctx.translate(p.x + p.size, p.y);
                 ctx.scale(-1, 1);
                 ctx.drawImage(charImg, 0, 0, p.size, p.size);
@@ -219,6 +290,17 @@ function draw() {
             }
             ctx.restore();
         }
+
+        // 닉네임 표시
+        const fullText = `[Lv.${p.level || 1}] ${p.nickname || "익명"}`;
+        ctx.font = "bold 12px 'Segoe UI', sans-serif";
+        const textWidth = ctx.measureText(fullText).width;
+        
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(p.x + p.size / 2 - textWidth / 2 - 4, p.y - 18, textWidth + 8, 16);
+        ctx.fillStyle = id === myPlayer.userId ? "#00ff88" : "#ffffff";
+        ctx.textAlign = "center";
+        ctx.fillText(fullText, p.x + p.size / 2, p.y - 6);
     });
 
     // 3. 스킬 이펙트 그리기
@@ -237,8 +319,9 @@ function draw() {
         const dt = damageTexts[i];
         ctx.fillStyle = dt.color;
         ctx.font = dt.isCrit ? "bold 24px sans-serif" : "bold 16px sans-serif";
+        ctx.textAlign = "center";
         ctx.fillText(dt.text, dt.x, dt.y);
-        dt.y -= 1; // 위로 떠오르는 효과
+        dt.y -= 1; 
         dt.life--;
         if (dt.life <= 0) damageTexts.splice(i, 1);
     }
