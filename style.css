@@ -1,6 +1,356 @@
-/* 대기실 프로필 UI 디자인 복구 */
-#user-profile-bar { display: flex; align-items: center; gap: 15px; background: rgba(30,30,30,0.9); padding: 15px 25px; border-radius: 15px; border: 1px solid #444; margin-bottom: 30px; }
-#profile-avatar { width: 70px; height: 70px; border-radius: 50%; object-fit: contain; background: #fff; border: 3px solid #00ff88; }
-#profile-info { display: flex; flex-direction: column; gap: 5px; }
-#profile-level-badge { background: #ffaa00; color: #000; padding: 4px 10px; border-radius: 15px; font-weight: bold; font-size: 13px; }
-#profile-nickname { font-size: 20px; font-weight: bold; color: #fff; }
+/* 기본 초기화 및 전체 화면 설정 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    background-color: #121212;
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 공통 오버레이 화면 (로그인, 로비 등) */
+.overlay-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+/* 4자리 PIN 코드 로그인 박스 */
+#login-box {
+    background: rgba(30, 30, 30, 0.95);
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid #444;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    width: 350px;
+}
+
+#login-box h2 {
+    font-size: 22px;
+    color: #ffaa00;
+    margin-bottom: 5px;
+}
+
+.input-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #555;
+    background: #222;
+    color: #fff;
+    outline: none;
+}
+
+/* 캐릭터 선택 카드 */
+.char-container {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    justify-content: center;
+}
+
+.char-card {
+    background: #222;
+    border: 2px solid #444;
+    border-radius: 12px;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.2s;
+    width: 110px;
+}
+
+.char-card.selected {
+    border-color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.char-img-box {
+    width: 60px;
+    height: 60px;
+    background: #fff;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.char-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.char-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ddd;
+}
+
+/* 공통 버튼 디자인 */
+.primary-btn, .action-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #00ff88, #00b8ff);
+    color: #000;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.primary-btn:hover, .action-btn:hover {
+    opacity: 0.9;
+}
+
+/* 대기실(로비) 화면 디자인 */
+#lobby-screen {
+    display: none; /* 기본은 숨김, 로그인 후 flex로 변경됨 */
+}
+
+#user-profile-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(30, 30, 30, 0.9);
+    padding: 15px 25px;
+    border-radius: 15px;
+    border: 1px solid #444;
+    margin-bottom: 30px;
+}
+
+#profile-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: contain;
+    background: #fff;
+    border: 3px solid #00ff88;
+}
+
+#profile-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#profile-level-badge {
+    background: #ffaa00;
+    color: #000;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+#profile-nickname {
+    font-size: 20px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.lobby-menu {
+    width: 300px;
+}
+
+.start-btn {
+    background: linear-gradient(135deg, #ffaa00, #ff5500);
+    color: #fff;
+    font-size: 18px;
+}
+
+/* 게임 화면 영역 */
+#game-screen {
+    display: none; /* 게임 입장 전까지 숨김 */
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+#ingame-hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 10;
+}
+
+#hud-level {
+    background: #ffaa00;
+    color: #000;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+.exp-bar-container {
+    height: 22px;
+    border: 2px solid;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.exp-bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.2s;
+}
+
+.exp-bar-text {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+}
+
+#game-container {
+    border: 3px solid #333;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #1a1a1a;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+
+#gameCanvas {
+    display: block;
+}
+
+#status {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 14px;
+    color: #00ff88;
+    background: rgba(0,0,0,0.6);
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+/* 모바일 조작부 (D-Pad & Skill Pad) */
+#controls-container {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 30px;
+    pointer-events: none;
+}
+
+#dpad, #skill-pad {
+    pointer-events: auto;
+    display: flex;
+}
+
+#dpad {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.dpad-btn {
+    position: absolute;
+    width: 45px;
+    height: 45px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#btn-up { top: 0; left: 47px; }
+#btn-left { top: 47px; left: 0; }
+#btn-right { top: 47px; left: 94px; }
+#btn-down { top: 94px; left: 47px; }
+
+#skill-pad {
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.skill-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.skill-btn small {
+    font-size: 10px;
+}
+
+/* 잠수(AFK) 화면 */
+#afk-screen {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 200;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
