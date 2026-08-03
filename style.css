@@ -3,104 +3,45 @@
     margin: 0;
     padding: 0;
     user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
 }
 
-html,
 body {
-    width: 100%;
-    height: 100%;
+    background: #111;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
     overflow: hidden;
+    width: 100vw;
+    height: 100vh;
 }
 
-body {
-    background: #080808;
-    color: #ffffff;
-
-    font-family:
-        'Segoe UI',
-        Tahoma,
-        Geneva,
-        Verdana,
-        sans-serif;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    touch-action: none;
-}
-
-
-/* =================================
-   공통
-================================= */
-
-button {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-}
-
-
-/* =================================
-   오버레이
-================================= */
-
+/* 화면 */
 .overlay-screen {
     position: fixed;
-
     inset: 0;
-
-    width: 100%;
-    height: 100%;
-
-    background: rgba(0, 0, 0, 0.92);
-
+    background: rgba(0,0,0,0.9);
     display: flex;
-
     flex-direction: column;
-
     justify-content: center;
-
     align-items: center;
-
     z-index: 100;
 }
 
-
-/* =================================
-   로그인
-================================= */
-
+/* 로그인 */
 #login-box {
-    width: min(350px, 90vw);
-
-    padding: 28px;
-
-    background: #1c1c1c;
-
+    width: 340px;
+    max-width: 90vw;
+    background: #1e1e1e;
+    padding: 25px;
     border-radius: 18px;
-
     border: 1px solid #444;
-
     display: flex;
-
     flex-direction: column;
-
-    align-items: center;
-
-    gap: 16px;
-
-    box-shadow:
-        0 10px 30px
-        rgba(0,0,0,0.5);
+    gap: 15px;
 }
 
 #login-box h2 {
-    font-size: 21px;
-
     color: #ffaa00;
+    text-align: center;
 }
 
 .input-group {
@@ -109,609 +50,229 @@ button {
 
 .input-group input {
     width: 100%;
-
-    padding: 13px;
-
+    padding: 12px;
     border-radius: 10px;
-
     border: 1px solid #555;
-
-    background: #252525;
-
-    color: #fff;
-
-    outline: none;
-
-    font-size: 16px;
+    background: #222;
+    color: white;
 }
 
-
-/* =================================
-   캐릭터 선택
-================================= */
-
+/* 캐릭터 */
 .char-container {
     display: flex;
-
-    gap: 12px;
-
     justify-content: center;
-
-    width: 100%;
+    gap: 12px;
 }
 
 .char-card {
-    width: 105px;
-
+    width: 110px;
     padding: 10px;
-
     background: #222;
-
     border: 2px solid #444;
-
     border-radius: 12px;
-
     cursor: pointer;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
+    text-align: center;
 }
 
 .char-card.selected {
     border-color: #00ff88;
-
-    background:
-        rgba(0,255,136,0.1);
 }
 
 .char-img-box {
     width: 60px;
     height: 60px;
-
-    background: #fff;
-
+    margin: auto auto 8px;
+    background: white;
     border-radius: 50%;
-
     overflow: hidden;
-
-    margin-bottom: 7px;
 }
 
 .char-img-box img {
     width: 100%;
     height: 100%;
-
     object-fit: cover;
 }
 
 .char-name {
     font-size: 13px;
-
-    font-weight: bold;
 }
 
-
-/* =================================
-   버튼
-================================= */
-
+/* 버튼 */
 .primary-btn,
-.action-btn,
-.guest-btn {
+.action-btn {
     width: 100%;
-
-    padding: 13px;
-
+    padding: 14px;
     border: none;
-
     border-radius: 10px;
-
+    background: linear-gradient(135deg,#00ff88,#00b8ff);
+    color: #000;
     font-size: 16px;
-
     font-weight: bold;
-
     cursor: pointer;
 }
 
-.primary-btn {
-    background:
-        linear-gradient(
-            135deg,
-            #00ff88,
-            #00b8ff
-        );
-
-    color: #000;
+.start-btn {
+    background: linear-gradient(135deg,#ffaa00,#ff5500);
+    color: white;
 }
 
-.guest-btn {
-    background: #333;
-
-    color: #ddd;
-
-    border: 1px solid #555;
-}
-
-.primary-btn:active,
-.action-btn:active,
-.guest-btn:active {
-    transform: scale(0.97);
-}
-
-
-/* =================================
-   로비
-================================= */
-
+/* 로비 */
 #lobby-screen {
     display: none;
 }
 
 #user-profile-bar {
-    width: min(420px, 90vw);
-
     display: flex;
-
     align-items: center;
-
     gap: 15px;
-
-    background: #1d1d1d;
-
     padding: 15px 20px;
-
-    border-radius: 15px;
-
+    margin-bottom: 25px;
+    background: #1e1e1e;
     border: 1px solid #444;
-
-    margin-bottom: 20px;
+    border-radius: 15px;
 }
 
 #profile-avatar {
     width: 65px;
     height: 65px;
-
     border-radius: 50%;
-
+    background: white;
     object-fit: contain;
-
-    background: #fff;
-
     border: 3px solid #00ff88;
-}
-
-#profile-info {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 7px;
-}
-
-.profile-row {
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
 }
 
 #profile-level-badge {
     background: #ffaa00;
-
     color: #000;
-
     padding: 4px 9px;
-
     border-radius: 12px;
-
-    font-size: 12px;
-
     font-weight: bold;
 }
 
 #profile-nickname {
     font-size: 19px;
-
     font-weight: bold;
-}
-
-.lobby-hp {
-    font-size: 12px;
-
-    color: #ff6666;
 }
 
 .lobby-menu {
-    width: min(300px, 80vw);
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 10px;
+    width: 280px;
+    max-width: 85vw;
 }
 
-.start-btn {
-    background:
-        linear-gradient(
-            135deg,
-            #ffaa00,
-            #ff5500
-        );
-
-    color: white;
-}
-
-.customize-btn {
-    background: #292929;
-
-    color: white;
-
-    border: 1px solid #555;
-}
-
-
-/* =================================
-   꾸미기
-================================= */
-
-.customize-screen {
-    display: none;
-
-    position: fixed;
-
-    inset: 0;
-
-    background:
-        rgba(0,0,0,0.85);
-
-    justify-content: center;
-
-    align-items: center;
-
-    z-index: 150;
-}
-
-.customize-box {
-    width: min(400px, 90vw);
-
-    padding: 25px;
-
-    background: #1b1b1b;
-
-    border: 1px solid #555;
-
-    border-radius: 18px;
-
-    text-align: center;
-}
-
-.customize-box h2 {
-    margin-bottom: 15px;
-}
-
-.skin-preview {
-    width: 130px;
-    height: 130px;
-
-    margin: 0 auto 15px;
-
-    background: #fff;
-
-    border-radius: 15px;
-
-    overflow: hidden;
-}
-
-.skin-preview img {
-    width: 100%;
-    height: 100%;
-
-    object-fit: contain;
-}
-
-.customize-box p {
-    color: #aaa;
-
-    font-size: 13px;
-
-    margin-bottom: 15px;
-}
-
-.skin-slots {
-    display: flex;
-
-    gap: 10px;
-
-    margin-bottom: 15px;
-}
-
-.skin-slot {
-    flex: 1;
-
-    padding: 12px;
-
-    border-radius: 10px;
-
-    border: 1px solid #555;
-
-    background: #292929;
-
-    color: white;
-}
-
-
-/* =================================
+/* ==========================================
    게임 화면
-================================= */
+========================================== */
 
 #game-screen {
     display: none;
-
-    position: relative;
-
-    width: 100vw;
-    height: 100vh;
-
+    position: fixed;
+    inset: 0;
     justify-content: center;
-
     align-items: center;
-
-    background: #080808;
-
-    overflow: hidden;
+    background: #111;
 }
 
-
-/* =================================
-   게임 캔버스
-================================= */
-
+/* 세로형 게임 */
 #game-container {
-    position: relative;
-
-    width: min(
-        960px,
-        100vw
-    );
-
-    aspect-ratio: 16 / 9;
-
-    border: 2px solid #333;
-
-    overflow: hidden;
-
+    width: min(100vw, 450px);
+    height: min(100vh, 800px);
     background: #111;
-
-    box-shadow:
-        0 0 30px
-        rgba(0,0,0,0.8);
+    border: 2px solid #333;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
 }
 
 #gameCanvas {
-    display: block;
-
     width: 100%;
     height: 100%;
-
-    background: #111;
+    display: block;
 }
 
-
-/* =================================
-   HUD
-================================= */
-
+/* HUD */
 #ingame-hud {
     position: absolute;
-
-    top: max(
-        12px,
-        env(safe-area-inset-top)
-    );
-
-    left: max(
-        12px,
-        env(safe-area-inset-left)
-    );
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
+    top: 15px;
+    left: 15px;
     z-index: 20;
-
-    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 #hud-level {
+    width: fit-content;
     background: #ffaa00;
-
     color: #000;
-
-    padding: 5px 9px;
-
+    padding: 5px 10px;
     border-radius: 8px;
-
-    font-size: 13px;
-
     font-weight: bold;
 }
 
-.hud-stat {
-    position: relative;
-
-    width: 130px;
-
-    height: 22px;
-}
-
-.hud-bar {
+#hud-hp-fill {
+    height: 100%;
     width: 100%;
-    height: 100%;
-
-    border-radius: 7px;
-
-    overflow: hidden;
-
-    background: #222;
-
-    border: 1px solid #555;
+    background: #ff3333;
 }
 
-.hud-fill {
-    height: 100%;
-
-    width: 0%;
-
-    transition: width 0.15s;
-}
-
-.hp-bar .hud-fill {
-    background:
-        linear-gradient(
-            90deg,
-            #ff2222,
-            #ff7777
-        );
-}
-
-.energy-bar .hud-fill {
-    background:
-        linear-gradient(
-            90deg,
-            #00aaff,
-            #00ffff
-        );
-}
-
-.hud-stat span {
+#hud-hp-text {
     position: absolute;
-
     inset: 0;
-
     display: flex;
-
     justify-content: center;
-
     align-items: center;
-
     font-size: 10px;
-
     font-weight: bold;
-
-    text-shadow:
-        1px 1px 2px #000;
 }
-
-
-/* =================================
-   서버 상태
-================================= */
 
 #status {
     position: absolute;
-
-    top: max(
-        12px,
-        env(safe-area-inset-top)
-    );
-
-    right: max(
-        12px,
-        env(safe-area-inset-right)
-    );
-
-    padding: 5px 9px;
-
-    background:
-        rgba(0,0,0,0.6);
-
-    border-radius: 7px;
-
-    font-size: 11px;
-
-    color: #00ff88;
-
+    top: 15px;
+    right: 15px;
     z-index: 20;
+    padding: 5px 8px;
+    background: rgba(0,0,0,0.6);
+    border-radius: 7px;
+    font-size: 11px;
 }
 
-
-/* =================================
-   모바일 조작
-================================= */
-
+/* 조작 */
 #controls-container {
-    position: absolute;
-
+    position: fixed;
+    bottom: 20px;
     left: 0;
-    right: 0;
-
-    bottom: max(
-        15px,
-        env(safe-area-inset-bottom)
-    );
-
+    width: 100%;
+    padding: 0 20px;
     display: flex;
-
     justify-content: space-between;
-
     align-items: flex-end;
-
-    padding:
-        0
-        max(18px, env(safe-area-inset-left))
-        0
-        max(18px, env(safe-area-inset-right));
-
-    z-index: 30;
-
+    z-index: 50;
     pointer-events: none;
 }
 
-#dpad {
-    position: relative;
+#dpad,
+#skill-pad {
+    pointer-events: auto;
+}
 
+#dpad {
     width: 135px;
     height: 135px;
-
-    pointer-events: auto;
+    position: relative;
 }
 
 .dpad-btn {
     position: absolute;
-
-    width: 43px;
-    height: 43px;
-
-    border-radius: 10px;
-
-    border: 1px solid
-        rgba(255,255,255,0.3);
-
-    background:
-        rgba(255,255,255,0.16);
-
+    width: 42px;
+    height: 42px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.5);
     color: white;
-
-    font-size: 17px;
-
     display: flex;
-
-    align-items: center;
-
     justify-content: center;
-}
-
-.dpad-btn:active {
-    background:
-        rgba(255,255,255,0.35);
+    align-items: center;
+    border-radius: 8px;
+    font-size: 17px;
 }
 
 #btn-up {
@@ -734,162 +295,40 @@ button {
     left: 46px;
 }
 
-
-/* =================================
-   스킬 버튼
-================================= */
-
 #skill-pad {
     display: flex;
-
-    gap: 9px;
-
-    align-items: flex-end;
-
-    pointer-events: auto;
+    gap: 8px;
 }
 
 .skill-btn {
-    width: 58px;
-    height: 58px;
-
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
-
+    border: 2px solid rgba(255,255,255,0.3);
     display: flex;
-
-    flex-direction: column;
-
     justify-content: center;
-
     align-items: center;
-
-    border: 2px solid
-        rgba(255,255,255,0.3);
-
-    color: white;
-
+    flex-direction: column;
     font-weight: bold;
-
-    font-size: 19px;
-
-    box-shadow:
-        0 4px 10px
-        rgba(0,0,0,0.5);
+    cursor: pointer;
 }
 
 .skill-btn small {
     font-size: 9px;
-
-    margin-top: 2px;
 }
 
-.skill-btn:active {
-    transform: scale(0.9);
-}
+/* 모바일 */
+@media (max-width: 500px) {
 
-.attack {
-    background: #ddd;
-
-    color: #000;
-}
-
-.skill1 {
-    background: #008dcc;
-}
-
-.skill2 {
-    background: #d52d55;
-}
-
-
-/* =================================
-   AFK
-================================= */
-
-#afk-screen {
-    display: none;
-
-    position: fixed;
-
-    inset: 0;
-
-    background:
-        rgba(0,0,0,0.95);
-
-    z-index: 200;
-
-    flex-direction: column;
-
-    justify-content: center;
-
-    align-items: center;
-
-    gap: 20px;
-}
-
-
-/* =================================
-   작은 모바일 화면
-================================= */
-
-@media (max-width: 600px) {
-
-    #ingame-hud {
-        transform: scale(0.85);
-
-        transform-origin: top left;
+    #game-container {
+        width: 100vw;
+        height: 100vh;
+        border: none;
+        border-radius: 0;
     }
 
-    #status {
-        transform: scale(0.8);
-
-        transform-origin: top right;
+    #controls-container {
+        bottom: 15px;
+        padding: 0 12px;
     }
-
-    #dpad {
-        transform: scale(0.85);
-
-        transform-origin: bottom left;
-    }
-
-    #skill-pad {
-        transform: scale(0.85);
-
-        transform-origin: bottom right;
-    }
-
-}
-
-
-/* =================================
-   가로 화면이 아닌 경우
-================================= */
-
-@media (orientation: portrait) {
-
-    #game-screen::before {
-        content:
-            "📱 휴대폰을 가로로 돌려주세요";
-
-        position: absolute;
-
-        inset: 0;
-
-        z-index: 500;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        background: #080808;
-
-        color: white;
-
-        font-size: 18px;
-
-        font-weight: bold;
-    }
-
 }
