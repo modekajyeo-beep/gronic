@@ -41,9 +41,8 @@ const keysPressed = {};
 let isGameStarted = false;
 let myRef = null;
 
-// 이펙트 및 데미지 텍스트 배열
+// 이펙트 배열
 let effects = []; 
-let damageTexts = [];
 
 // 전역 함수 등록 (HTML onclick 연동용)
 window.selectInitialChar = function(charType) {
@@ -119,27 +118,6 @@ window.enterGame = function() {
     isGameStarted = true;
 };
 
-// ==========================================
-// 🔥 전투 및 스킬 시스템 로직 (사냥터/개인 집 확장 준비)
-// ==========================================
-function updateEnergyUI() {
-    const percent = Math.min(100, (myPlayer.energy / myPlayer.maxEnergy) * 100);
-    const fillEl = document.getElementById("hud-energy-fill");
-    const textEl = document.getElementById("hud-energy-text");
-    
-    if (fillEl) fillEl.style.width = `${percent}%`;
-    
-    if (textEl) {
-        if(percent >= 100) {
-            textEl.textContent = "🔥 치명타 장전 완료!";
-            textEl.style.color = "#ffff00";
-        } else {
-            textEl.textContent = `에너지 ${Math.floor(percent)}%`;
-            textEl.style.color = "#fff";
-        }
-    }
-}
-
 // 스킬 버튼 이벤트 연동
 const btnAtk = document.getElementById("btn-attack");
 const btnS1 = document.getElementById("btn-skill1");
@@ -159,33 +137,35 @@ function useSkill(type) {
         effects.push({ x: attackX, y: myPlayer.y + 20, radius: 20, color: isGojo?"#00ffff":"#ff3333", life: 10 });
     } else if (type === "skill1") {
         if(isGojo) {
-            myPlayer.x = myPlayer.facing === 'right' ? myPlayer.x + 150 : myPlayer.x - 150;
+            myPlayer.x = myPlayer.facing === 'right' ? myPlayer.x + 100 : myPlayer.x - 100;
             effects.push({ x: myPlayer.x, y: myPlayer.y, radius: 40, color: "rgba(150, 0, 255, 0.5)", life: 15 });
         } else {
-            attackX = myPlayer.facing === 'right' ? myPlayer.x + 150 : myPlayer.x - 150;
+            attackX = myPlayer.facing === 'right' ? myPlayer.x + 100 : myPlayer.x - 100;
             effects.push({ x: attackX, y: myPlayer.y + 20, radius: 30, color: "#ff5500", life: 15 });
         }
     } else if (type === "skill2") {
         if(isGojo) {
-            effects.push({ x: myPlayer.x + 25, y: myPlayer.y + 25, radius: 100, color: "rgba(100, 0, 255, 0.6)", life: 20 });
+            effects.push({ x: myPlayer.x + 25, y: myPlayer.y + 25, radius: 80, color: "rgba(100, 0, 255, 0.6)", life: 20 });
         } else {
-            effects.push({ x: myPlayer.x + 25, y: myPlayer.y + 25, radius: 120, color: "rgba(255, 200, 0, 0.5)", life: 20 });
+            effects.push({ x: myPlayer.x + 25, y: myPlayer.y + 25, radius: 90, color: "rgba(255, 200, 0, 0.5)", life: 20 });
         }
     }
 }
 
 // ==========================================
-// 🎮 이동 및 조작 로직
+// 🎮 이동 및 조작 로직 (WASD + 방향키 지원, 속도 조절)
 // ==========================================
 window.addEventListener("keydown", (e) => {
-    if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
+    const k = e.key.toLowerCase();
+    if(["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d", " "].includes(k)) {
         e.preventDefault();
     }
-    keysPressed[e.key] = true;
+    keysPressed[k] = true;
 });
 
 window.addEventListener("keyup", (e) => {
-    keysPressed[e.key] = false;
+    const k = e.key.toLowerCase();
+    keysPressed[k] = false;
 });
 
 function bindControlBtn(btnId, keyName) {
@@ -211,20 +191,20 @@ function bindControlBtn(btnId, keyName) {
     btn.addEventListener("mouseleave", pressOff);
 }
 
-bindControlBtn("btn-up", "ArrowUp");
-bindControlBtn("btn-down", "ArrowDown");
-bindControlBtn("btn-left", "ArrowLeft");
-bindControlBtn("btn-right", "ArrowRight");
+bindControlBtn("btn-up", "w");
+bindControlBtn("btn-down", "s");
+bindControlBtn("btn-left", "a");
+bindControlBtn("btn-right", "d");
 
 function updatePosition() {
     if (!isGameStarted) return;
-    const speed = 5;
+    const speed = 2.5; // 이동 속도 기존 5에서 2.5로 부드럽게 조정
     let moved = false;
 
-    if (keysPressed["ArrowUp"]) { myPlayer.y -= speed; moved = true; }
-    if (keysPressed["ArrowDown"]) { myPlayer.y += speed; moved = true; }
-    if (keysPressed["ArrowLeft"]) { myPlayer.x -= speed; myPlayer.facing = 'left'; moved = true; }
-    if (keysPressed["ArrowRight"]) { myPlayer.x += speed; myPlayer.facing = 'right'; moved = true; }
+    if (keysPressed["arrowup"] || keysPressed["w"]) { myPlayer.y -= speed; moved = true; }
+    if (keysPressed["arrowdown"] || keysPressed["s"]) { myPlayer.y += speed; moved = true; }
+    if (keysPressed["arrowleft"] || keysPressed["a"]) { myPlayer.x -= speed; myPlayer.facing = 'left'; moved = true; }
+    if (keysPressed["arrowright"] || keysPressed["d"]) { myPlayer.x += speed; myPlayer.facing = 'right'; moved = true; }
 
     // 캔버스 벽 처리
     if (myPlayer.x < 0) myPlayer.x = 0;
@@ -261,7 +241,6 @@ function draw() {
     if (bgImage && bgImage.complete && bgImage.naturalWidth !== 0) {
         ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
     } else {
-        // 이미지가 아직 안 로드되었을 경우의 대체 단색 배경
         ctx.fillStyle = "#1a1a1a";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
