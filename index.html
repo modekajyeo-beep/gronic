@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- 캐시 방지 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>실시간 멀티플레이어 RPG 게임</title>
-
-    <!-- 🎨 외부 CSS 스타일 불러오기 -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,50 +13,36 @@
     <!-- 잠수(AFK) 화면 -->
     <div id="afk-screen">
         <h1>연결이 종료되었습니다 💤</h1>
-        <p>3분 동안 움직임이 없어 로비에서 퇴장되었습니다.</p>
         <button class="primary-btn" style="width: 250px;" onclick="location.reload()">새로고침 후 재접속</button>
     </div>
 
-    <!-- STEP 1: 4자리 PIN 코드 접속 화면 -->
+    <!-- 4자리 PIN 코드 접속 화면 -->
     <div id="setup-screen" class="overlay-screen">
         <div id="login-box">
-            <h2>🔑 4자리 코드로 간편 접속</h2>
-            <p style="color:#aaa; font-size:13px; margin:-10px 0 15px 0;">나만의 4자리 비밀번호로 캐릭터를 키워보세요!</p>
-            
+            <h2>🔑 4자리 코드로 접속</h2>
             <div class="input-group">
-                <label>🔑 나만의 4자리 코드 (숫자)</label>
-                <input type="password" id="user-pin" maxlength="4" placeholder="예: 1234" style="text-align:center; font-size:20px; letter-spacing:5px;">
+                <input type="password" id="user-pin" maxlength="4" placeholder="4자리 숫자" style="text-align:center; font-size:20px; letter-spacing:5px;">
             </div>
-
             <div class="input-group">
-                <label>👤 닉네임 (처음 접속할 때만 입력)</label>
-                <input type="text" id="user-nickname" placeholder="최대 8자 입력" maxlength="8">
+                <input type="text" id="user-nickname" placeholder="닉네임 (처음 접속시)" maxlength="8">
             </div>
-
             <div class="input-group">
-                <label>🎭 대표 캐릭터 선택 (처음 접속 시)</label>
                 <div class="char-container">
                     <div class="char-card selected" id="card-char1" onclick="selectInitialChar('char1')">
-                        <div class="char-img-box">
-                            <img src="./gojo.png" alt="고조사토루">
-                        </div>
+                        <div class="char-img-box"><img src="./gojo.png" alt="고조사토루"></div>
                         <span class="char-name">고조사토루</span>
                     </div>
-                    
                     <div class="char-card" id="card-char2" onclick="selectInitialChar('char2')">
-                        <div class="char-img-box">
-                            <img src="./luffy.png" alt="루피">
-                        </div>
+                        <div class="char-img-box"><img src="./luffy.png" alt="루피"></div>
                         <span class="char-name">루피</span>
                     </div>
                 </div>
             </div>
-
-            <button class="primary-btn" onclick="handlePinLogin()">게임 접속 / 캐릭터 불러오기</button>
+            <button class="primary-btn" onclick="handlePinLogin()">게임 접속</button>
         </div>
     </div>
 
-    <!-- STEP 2: 대기실(로비) 화면 -->
+    <!-- 대기실(로비) 화면 -->
     <div id="lobby-screen" class="overlay-screen">
         <div id="user-profile-bar">
             <img id="profile-avatar" src="" alt="프로필">
@@ -69,78 +51,48 @@
                     <span id="profile-level-badge">Lv.1</span>
                     <span id="profile-nickname">닉네임</span>
                 </div>
-                <div class="exp-bar-container">
-                    <div id="exp-bar-fill" class="exp-bar-fill" style="width: 0%;"></div>
-                    <span id="exp-bar-text" class="exp-bar-text">EXP 0 / 100</span>
-                </div>
             </div>
         </div>
-
         <div class="lobby-menu">
-            <button class="action-btn" onclick="openRecordBox()">💪 헬스 기록 보관함 (+50 EXP)</button>
-            <button class="action-btn start-btn" onclick="enterGame()">🎮 게임 공간 입장하기</button>
-            <button class="action-btn close-btn" onclick="location.reload()" style="font-size:14px; padding:12px;">로그아웃</button>
+            <button class="action-btn start-btn" onclick="enterGame()">🎮 게임 입장하기</button>
         </div>
     </div>
 
-    <!-- 헬스 기록 보관함 화면 -->
-    <div id="record-screen" class="overlay-screen" style="display: none; background-color: rgba(10, 10, 10, 0.95); z-index: 9999;">
-        <div id="record-box">
-            <div id="main-record-view" style="width: 100%;">
-                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:10px;">
-                    <h2 style="margin:0;">💪 헬스 기록 보관함</h2>
-                    <span id="active-pin-tag" style="color:#00ff88; font-weight:bold; font-size:13px; background:#222; padding:4px 8px; border-radius:6px; border:1px solid #00ff88;">코드: ****</span>
-                </div>
-
-                <div class="date-picker-group">
-                    <label for="workout-date">📅 기록 날짜:</label>
-                    <input type="date" id="workout-date" class="date-input" onchange="onDateOrTabChange()">
-                </div>
-
-                <div class="tabs">
-                    <button class="tab-btn active" id="tab-arm" onclick="changeTab('arm')">팔</button>
-                    <button class="tab-btn" id="tab-back" onclick="changeTab('back')">등</button>
-                    <button class="tab-btn" id="tab-leg" onclick="changeTab('leg')">하체</button>
-                    <button class="tab-btn" id="tab-shoulder" onclick="changeTab('shoulder')">어깨</button>
-                </div>
-
-                <textarea id="record-textarea" placeholder="선택한 날짜의 득근 기록을 작성하세요!&#13;&#10;기록 저장 시 경험치 +50 EXP를 획득합니다!"></textarea>
-                
-                <div class="record-actions">
-                    <button class="primary-btn" onclick="saveRecord()">저장하기 (+50 EXP)</button>
-                    <button class="primary-btn close-btn" onclick="closeRecordBox()">닫기</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- STEP 3: 게임 화면 -->
+    <!-- 게임 화면 -->
     <div id="game-screen">
         <div id="ingame-hud">
             <span id="hud-level">Lv.1</span>
-            <div class="exp-bar-container" style="width: 180px;">
-                <div id="hud-exp-fill" class="exp-bar-fill" style="width: 0%;"></div>
-                <span id="hud-exp-text" class="exp-bar-text">0 / 100</span>
+            <!-- 에너지 게이지 바 추가 -->
+            <div class="exp-bar-container" style="width: 150px; background-color: #333; border-color: #ffaa00;">
+                <div id="hud-energy-fill" class="exp-bar-fill" style="width: 0%; background: linear-gradient(90deg, #ffcc00, #ff5500);"></div>
+                <span id="hud-energy-text" class="exp-bar-text">에너지 0% (폭주 준비중)</span>
             </div>
         </div>
-
-        <p style="margin: 10px 0; color: #888; font-size: 13px; font-weight: bold;">조작: PC 방향키 / 모바일 화면 버튼</p>
         
         <div id="game-container">
-            <canvas id="gameCanvas" width="600" height="400"></canvas>
+            <canvas id="gameCanvas" width="800" height="450"></canvas>
         </div>
 
         <div id="status">서버 연결 중...</div>
 
-        <div id="dpad">
-            <div class="dpad-btn" id="btn-up">▲</div>
-            <div class="dpad-btn" id="btn-left">◀</div>
-            <div class="dpad-btn" id="btn-right">▶</div>
-            <div class="dpad-btn" id="btn-down">▼</div>
+        <!-- 모바일 조작부 -->
+        <div id="controls-container">
+            <div id="dpad">
+                <div class="dpad-btn" id="btn-up">▲</div>
+                <div class="dpad-btn" id="btn-left">◀</div>
+                <div class="dpad-btn" id="btn-right">▶</div>
+                <div class="dpad-btn" id="btn-down">▼</div>
+            </div>
+            
+            <!-- 스킬 버튼부 -->
+            <div id="skill-pad">
+                <div class="skill-btn" id="btn-attack" style="background:#ddd; color:#000;">👊<br><small>평타</small></div>
+                <div class="skill-btn" id="btn-skill1" style="background:#00b8ff;">⚡<br><small>스킬1</small></div>
+                <div class="skill-btn" id="btn-skill2" style="background:#ff3366;">🔥<br><small>스킬2</small></div>
+            </div>
         </div>
     </div>
 
-    <!-- ⚡ 외부 JS 파일 불러오기 -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
