@@ -20,7 +20,7 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const statusEl = document.getElementById("status");
 
-// 캐릭터 및 배경 이미지 로드 (bg.png 소문자 적용)
+// 캐릭터 및 배경 이미지 로드
 const CHAR_IMAGES = { char1: new Image(), char2: new Image() };
 CHAR_IMAGES.char1.src = "./gojo.png";
 CHAR_IMAGES.char2.src = "./luffy.png";
@@ -41,11 +41,11 @@ const keysPressed = {};
 let isGameStarted = false;
 let myRef = null;
 
-// 이펙트 및 몬스터 배열
+// 이펙트 및 데미지 텍스트 배열
 let effects = []; 
 let damageTexts = [];
 
-// [1단계 추가] 테스트 몬스터 객체
+// [2단계 업데이트] 테스트 몬스터 객체 (AI 이동, 속도, 상태 속성 추가)
 let testMonster = {
     id: "monster_1",
     name: "테스트 몬스터",
@@ -53,7 +53,10 @@ let testMonster = {
     y: 200,
     size: 45,
     hp: 100,
-    maxHp: 100
+    maxHp: 100,
+    speed: 1.2,        // 플레이어(2.5)보다 느린 이동 속도
+    state: "IDLE",     // "IDLE" (대기) 또는 "CHASE" (추적)
+    facing: 'left'
 };
 
 // 전역 함수 등록 (HTML onclick 연동용)
@@ -148,7 +151,7 @@ function useSkill(type) {
     if (type === "attack") {
         effects.push({ x: attackX, y: myPlayer.y + 20, radius: 20, color: isGojo?"#00ffff":"#ff3333", life: 10 });
 
-        // [1단계 추가] 평타 적중 및 데미지 판정
+        // 평타 적중 및 데미지 판정
         if (testMonster && testMonster.hp > 0) {
             const distanceX = testMonster.x - myPlayer.x;
             const inRangeRight = (myPlayer.facing === 'right' && distanceX >= 0 && distanceX <= 80);
@@ -188,7 +191,7 @@ function useSkill(type) {
 }
 
 // ==========================================
-// 🎮 이동 및 조작 로직 (WASD + 방향키 지원, 속도 조절)
+// 🎮 이동 및 조작 로직 (WASD + 방향키 지원)
 // ==========================================
 window.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
@@ -261,6 +264,61 @@ function updatePosition() {
     }
 }
 
+// [2단계 추가] 테스트 몬스터 AI 이동 로직 함수
+function updateMonsterAI() {
+    if (!testMonster || testMonster.hp <= 0) return;
+
+    // 가장 가까운 타겟(플레이어들 중) 찾기
+    let target = null;
+    let minDistance = Infinity;
+
+    // 내 플레이어 기준 거리 체크
+    if (isGameStarted) {
+        let dist = Math.hypot(myPlayer.x - testMonster.x, myPlayer.y - testMonster.y);
+        minDistance = dist;
+        target = myPlayer;
+    }
+
+    // 다른 접속 플레이어들도 탐색하여 더 가까운 대상이 있다면 타겟 변경
+    Object.keys(players).forEach((id) => {
+        if (id === myPlayer.userId) return;
+        const p = players[id];
+        let dist = Math.hypot(p.x - testMonster.x, p.y - testMonster.y);
+        if (dist < minDistance) {
+            minDistance = dist;
+            target = p;
+        }
+    });
+
+    // 추적 및 정지 로직 (인식 범위: 300픽셀 이내, 공격/정지 거리: 55픽셀 이내)
+    if (target && minDistance < 300) {
+        if (minDistance > 55) {
+            testMonster.state = "CHASE";
+            
+            // X, Y 방향으로 플레이어 향해 천천히 이동
+            if (testMonster.x < target.x) {
+                testMonster.x += testMonster.speed;
+                testMonster.facing = 'right';
+            } else if (testMonster.x > target.x) {
+                testMonster.x -= testMonster.speed;
+                testMonster.facing = 'left';
+            }
+
+            if (testMonster.y < target.y) {
+                testMonster.y += testMonster.speed;
+            } else if (testMonster.y > target.y) {
+                testMonster.y -= testMonster.speed;
+            }
+        } else {
+            // 충분히 가까워지면 대기(IDLE) 상태로 전환하고 멈춤
+            testMonster.state = "IDLE";
+        }
+    } else {
+        // 플레이어가 멀리 있거나 없으면 대기 상태
+        testMonster.state = "IDLE";
+    }
+}
+
 onValue(ref(db, 'players'), (snapshot) => { 
     players = snapshot.val() || {}; 
     if (statusEl) {
@@ -270,6 +328,8 @@ onValue(ref(db, 'players'), (snapshot) => {
 
 function draw() {
     updatePosition();
+    updateMonsterAI(); // [2단계 추가] 매 프레임마다 몬스터 AI 업데이트 실행
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // 1. 배경 이미지 (bg.png) 그리기
@@ -280,16 +340,16 @@ function draw() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // [1단계 추가] 테스트 몬스터 그리기 (HP가 남아있을 때만)
+    // 2. 테스트 몬스터 그리기 (HP가 남아있을 때만)
     if (testMonster && testMonster.hp > 0) {
         ctx.fillStyle = "#ff4444";
         ctx.fillRect(testMonster.x, testMonster.y, testMonster.size, testMonster.size);
-        ctx.strokeStyle = "#ffffff";
+        ctx.strokeStyle = testMonster.state === "CHASE" ? "#ffff00" : "#ffffff"; // 추적 중일 때 테두리 노란색으로 표시 확인 가능
         ctx.lineWidth = 2;
         ctx.strokeRect(testMonster.x, testMonster.y, testMonster.size, testMonster.size);
 
-        // 몬스터 이름 및 HP 텍스트
-        const mText = `[HP] ${testMonster.hp}/${testMonster.maxHp} ${testMonster.name}`;
+        // 몬스터 이름 및 상태/HP 텍스트
+        const mText = `[HP] ${testMonster.hp}/${testMonster.maxHp} ${testMonster.name} (${testMonster.state})`;
         ctx.font = "bold 11px 'Segoe UI', sans-serif";
         const mTextWidth = ctx.measureText(mText).width;
 
@@ -313,7 +373,7 @@ function draw() {
         ctx.fillRect(barX, barY, barW * hpPercent, barH);
     }
 
-    // 2. 캐릭터 그리기
+    // 3. 캐릭터 그리기
     Object.keys(players).forEach((id) => {
         const p = players[id];
         const charImg = CHAR_IMAGES[p.charType] || CHAR_IMAGES.char1;
@@ -342,7 +402,7 @@ function draw() {
         ctx.fillText(fullText, p.x + p.size / 2, p.y - 6);
     });
 
-    // 3. 스킬 이펙트 그리기
+    // 4. 스킬 이펙트 그리기
     for (let i = effects.length - 1; i >= 0; i--) {
         const eff = effects[i];
         ctx.beginPath();
@@ -353,7 +413,7 @@ function draw() {
         if (eff.life <= 0) effects.splice(i, 1);
     }
 
-    // [1단계 추가] 데미지 텍스트 이펙트 그리기
+    // 5. 데미지 텍스트 이펙트 그리기
     for (let i = damageTexts.length - 1; i >= 0; i--) {
         const dt = damageTexts[i];
         ctx.font = "bold 14px 'Segoe UI', sans-serif";
