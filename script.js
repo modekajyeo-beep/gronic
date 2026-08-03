@@ -223,8 +223,8 @@ window.addEventListener("keyup", (e) => keysPressed[e.key] = false);
 function bindTouchBtn(btnId, keyName) {
     const btn = document.getElementById(btnId);
     if (!btn) return;
-    btn.addEventListener("touchstart", (e) => { e.preventDefault(); keysPressed[keyName] = true; });
-    btn.addEventListener("touchend", (e) => { e.preventDefault(); keysPressed[keyName] = false; });
+    btn.addEventListener("touchstart", (e) => { e.preventDefault(); keysPressed[keyName] = true; }, { passive: false });
+    btn.addEventListener("touchend", (e) => { e.preventDefault(); keysPressed[keyName] = false; }, { passive: false });
 }
 bindTouchBtn("btn-up", "ArrowUp"); bindTouchBtn("btn-down", "ArrowDown");
 bindTouchBtn("btn-left", "ArrowLeft"); bindTouchBtn("btn-right", "ArrowRight");
