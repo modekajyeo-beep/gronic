@@ -2,25 +2,47 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <meta
+        name="viewport"
+        content="width=device-width,
+                 initial-scale=1.0,
+                 maximum-scale=1.0,
+                 user-scalable=no,
+                 viewport-fit=cover"
+    >
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 
-    <title>실시간 멀티플레이어 RPG 게임</title>
+    <title>실시간 멀티플레이어 RPG</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- 잠수/연결 종료 화면 -->
+    <!-- =========================
+         AFK 화면
+    ========================== -->
     <div id="afk-screen">
+
         <h1>연결이 종료되었습니다 💤</h1>
-        <button class="primary-btn" style="width:250px;" onclick="location.reload()">
+
+        <button
+            class="primary-btn"
+            style="width:250px;"
+            onclick="location.reload()"
+        >
             새로고침 후 재접속
         </button>
+
     </div>
 
-    <!-- 로그인 화면 -->
+
+    <!-- =========================
+         로그인
+    ========================== -->
+
     <div id="setup-screen" class="overlay-screen">
 
         <div id="login-box">
@@ -32,8 +54,8 @@
                     type="password"
                     id="user-pin"
                     maxlength="4"
+                    inputmode="numeric"
                     placeholder="4자리 숫자"
-                    style="text-align:center; font-size:20px; letter-spacing:5px;"
                 >
             </div>
 
@@ -46,8 +68,8 @@
                 >
             </div>
 
-            <!-- 캐릭터 선택 -->
             <div class="input-group">
+
                 <div class="char-container">
 
                     <div
@@ -56,10 +78,14 @@
                         onclick="selectInitialChar('char1')"
                     >
                         <div class="char-img-box">
-                            <img src="./gojo.png" alt="고죠">
+                            <img src="./gojo.png" alt="캐릭터1">
                         </div>
-                        <span class="char-name">고죠</span>
+
+                        <span class="char-name">
+                            고죠
+                        </span>
                     </div>
+
 
                     <div
                         class="char-card"
@@ -67,141 +93,209 @@
                         onclick="selectInitialChar('char2')"
                     >
                         <div class="char-img-box">
-                            <img src="./luffy.png" alt="루피">
+                            <img src="./luffy.png" alt="캐릭터2">
                         </div>
-                        <span class="char-name">루피</span>
+
+                        <span class="char-name">
+                            루피
+                        </span>
                     </div>
 
                 </div>
+
             </div>
 
-            <button class="primary-btn" onclick="handlePinLogin()">
+
+            <button
+                class="primary-btn"
+                onclick="handlePinLogin()"
+            >
                 게임 접속
             </button>
 
-            <!-- 게스트 -->
-            <button class="guest-btn" onclick="startGuestMode()">
+
+            <!-- 게스트 버튼 -->
+            <button
+                class="guest-btn"
+                onclick="enterGuestMode()"
+            >
                 👤 게스트로 시작
             </button>
 
         </div>
+
     </div>
 
 
-    <!-- ========================= -->
-    <!-- 로비 -->
-    <!-- ========================= -->
+
+    <!-- =========================
+         로비
+    ========================== -->
 
     <div id="lobby-screen" class="overlay-screen">
 
         <div id="user-profile-bar">
 
-            <img id="profile-avatar" src="" alt="프로필">
+            <img
+                id="profile-avatar"
+                src=""
+                alt="프로필"
+            >
 
             <div id="profile-info">
 
-                <div class="profile-name-row">
-                    <span id="profile-level-badge">Lv.1</span>
-                    <span id="profile-nickname">닉네임</span>
+                <div class="profile-row">
+
+                    <span id="profile-level-badge">
+                        Lv.1
+                    </span>
+
+                    <span id="profile-nickname">
+                        닉네임
+                    </span>
+
+                </div>
+
+                <!-- HP 표시 -->
+                <div class="lobby-hp">
+                    ❤️ HP
+                    <span id="lobby-hp-text">100 / 100</span>
                 </div>
 
             </div>
 
         </div>
 
+
         <div class="lobby-menu">
 
-            <button class="action-btn start-btn" onclick="enterGame()">
+            <button
+                class="action-btn start-btn"
+                onclick="enterGame()"
+            >
                 🎮 게임 입장하기
             </button>
 
-            <button class="action-btn customize-btn" onclick="openCustomize()">
+
+            <!-- 꾸미기 -->
+            <button
+                class="action-btn customize-btn"
+                onclick="openCustomize()"
+            >
                 🎨 꾸미기
             </button>
 
         </div>
 
-    </div>
 
+        <!-- 꾸미기 창 -->
 
-    <!-- ========================= -->
-    <!-- 꾸미기 화면 -->
-    <!-- ========================= -->
+        <div
+            id="customize-screen"
+            class="customize-screen"
+        >
 
-    <div id="customize-screen" class="overlay-screen">
+            <div class="customize-box">
 
-        <div class="customize-box">
+                <h2>🎨 꾸미기</h2>
 
-            <h2>🎨 캐릭터 꾸미기</h2>
+                <div class="skin-preview">
 
-            <div class="customize-preview">
+                    <img
+                        id="skin-preview-img"
+                        src="./gojo.png"
+                        alt="스킨 미리보기"
+                    >
 
-                <div class="preview-title">
-                    현재 캐릭터
                 </div>
 
-                <img id="customize-preview-img" src="./gojo.png" alt="현재 스킨">
+                <p>
+                    여기에 나중에 스킨을 추가하면 됨.
+                </p>
 
-                <div id="customize-preview-name">
-                    기본 스킨
+                <div class="skin-slots">
+
+                    <button
+                        class="skin-slot"
+                        onclick="selectSkin('char1')"
+                    >
+                        기본 스킨
+                    </button>
+
+                    <button
+                        class="skin-slot"
+                        onclick="selectSkin('char2')"
+                    >
+                        스킨 2
+                    </button>
+
                 </div>
 
-            </div>
 
-
-            <div class="skin-title">
-                스킨 선택
-            </div>
-
-            <div id="skin-grid">
-
-                <!-- JS가 스킨 슬롯을 자동 생성 -->
+                <button
+                    class="primary-btn"
+                    onclick="closeCustomize()"
+                >
+                    닫기
+                </button>
 
             </div>
-
-
-            <button class="back-btn" onclick="closeCustomize()">
-                ← 로비로 돌아가기
-            </button>
 
         </div>
 
     </div>
 
 
-    <!-- ========================= -->
-    <!-- 게임 화면 -->
-    <!-- ========================= -->
+
+    <!-- =========================
+         게임
+    ========================== -->
 
     <div id="game-screen">
 
         <!-- HUD -->
+
         <div id="ingame-hud">
 
-            <span id="hud-level">Lv.1</span>
+            <div id="hud-level">
+                Lv.1
+            </div>
+
 
             <!-- HP -->
-            <div class="hud-resource hp-resource">
+            <div class="hud-stat">
 
-                <div class="resource-bar">
-                    <div id="hud-hp-fill" class="resource-fill hp-fill"></div>
+                <div class="hud-bar hp-bar">
+
+                    <div
+                        id="hud-hp-fill"
+                        class="hud-fill"
+                    ></div>
+
                 </div>
 
                 <span id="hud-hp-text">
-                    ❤️ HP 100 / 100
+                    HP 100 / 100
                 </span>
 
             </div>
 
-            <!-- ENERGY -->
-            <div class="hud-resource energy-resource">
 
-                <div class="resource-bar">
-                    <div id="hud-energy-fill" class="resource-fill energy-fill"></div>
+            <!-- 에너지 -->
+
+            <div class="hud-stat">
+
+                <div class="hud-bar energy-bar">
+
+                    <div
+                        id="hud-energy-fill"
+                        class="hud-fill"
+                    ></div>
+
                 </div>
 
                 <span id="hud-energy-text">
-                    에너지 0%
+                    EN 0 / 100
                 </span>
 
             </div>
@@ -209,32 +303,19 @@
         </div>
 
 
-        <!-- GAME OVER -->
-        <div id="game-over-screen">
 
-            <div class="game-over-box">
+        <!-- 게임 영역 -->
 
-                <h1>GAME OVER</h1>
-
-                <p>체력이 모두 소진되었습니다.</p>
-
-                <button class="primary-btn" onclick="restartGame()">
-                    🔄 다시 시작
-                </button>
-
-                <button class="back-lobby-btn" onclick="returnToLobby()">
-                    🏠 로비로
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- 게임 캔버스 -->
         <div id="game-container">
-            <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+            <canvas
+                id="gameCanvas"
+                width="960"
+                height="540"
+            ></canvas>
+
         </div>
+
 
 
         <div id="status">
@@ -242,50 +323,74 @@
         </div>
 
 
+
         <!-- 모바일 조작 -->
+
         <div id="controls-container">
+
+            <!-- 이동 -->
 
             <div id="dpad">
 
-                <div class="dpad-btn" id="btn-up">▲</div>
-                <div class="dpad-btn" id="btn-left">◀</div>
-                <div class="dpad-btn" id="btn-right">▶</div>
-                <div class="dpad-btn" id="btn-down">▼</div>
+                <button
+                    class="dpad-btn"
+                    id="btn-up"
+                >
+                    ▲
+                </button>
+
+                <button
+                    class="dpad-btn"
+                    id="btn-left"
+                >
+                    ◀
+                </button>
+
+                <button
+                    class="dpad-btn"
+                    id="btn-right"
+                >
+                    ▶
+                </button>
+
+                <button
+                    class="dpad-btn"
+                    id="btn-down"
+                >
+                    ▼
+                </button>
 
             </div>
 
 
+
+            <!-- 스킬 -->
+
             <div id="skill-pad">
 
-                <div
-                    class="skill-btn"
+                <button
+                    class="skill-btn attack"
                     id="btn-attack"
-                    style="background:#ddd; color:#000;"
                 >
                     👊
-                    <br>
                     <small>평타</small>
-                </div>
+                </button>
 
-                <div
-                    class="skill-btn"
+                <button
+                    class="skill-btn skill1"
                     id="btn-skill1"
-                    style="background:#00b8ff;"
                 >
                     ⚡
-                    <br>
                     <small>스킬1</small>
-                </div>
+                </button>
 
-                <div
-                    class="skill-btn"
+                <button
+                    class="skill-btn skill2"
                     id="btn-skill2"
-                    style="background:#ff3366;"
                 >
                     🔥
-                    <br>
                     <small>스킬2</small>
-                </div>
+                </button>
 
             </div>
 
@@ -294,7 +399,10 @@
     </div>
 
 
-    <script type="module" src="script.js"></script>
+    <script
+        type="module"
+        src="script.js"
+    ></script>
 
 </body>
 </html>
