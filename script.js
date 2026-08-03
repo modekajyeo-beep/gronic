@@ -41,8 +41,20 @@ const keysPressed = {};
 let isGameStarted = false;
 let myRef = null;
 
-// 이펙트 배열
+// 이펙트 및 몬스터 배열
 let effects = []; 
+let damageTexts = [];
+
+// [1단계 추가] 테스트 몬스터 객체
+let testMonster = {
+    id: "monster_1",
+    name: "테스트 몬스터",
+    x: 400,
+    y: 200,
+    size: 45,
+    hp: 100,
+    maxHp: 100
+};
 
 // 전역 함수 등록 (HTML onclick 연동용)
 window.selectInitialChar = function(charType) {
@@ -135,6 +147,29 @@ function useSkill(type) {
 
     if (type === "attack") {
         effects.push({ x: attackX, y: myPlayer.y + 20, radius: 20, color: isGojo?"#00ffff":"#ff3333", life: 10 });
+
+        // [1단계 추가] 평타 적중 및 데미지 판정
+        if (testMonster && testMonster.hp > 0) {
+            const distanceX = testMonster.x - myPlayer.x;
+            const inRangeRight = (myPlayer.facing === 'right' && distanceX >= 0 && distanceX <= 80);
+            const inRangeLeft = (myPlayer.facing === 'left' && distanceX <= 0 && Math.abs(distanceX) <= 80);
+            const inVerticalRange = Math.abs(testMonster.y - myPlayer.y) < 50;
+
+            if ((inRangeRight || inRangeLeft) && inVerticalRange) {
+                const damage = 20;
+                testMonster.hp -= damage;
+                if (testMonster.hp < 0) testMonster.hp = 0;
+
+                // 데미지 텍스트 이펙트 추가
+                damageTexts.push({
+                    text: `-${damage}`,
+                    x: testMonster.x + testMonster.size / 2,
+                    y: testMonster.y - 10,
+                    life: 25,
+                    color: "#ff3333"
+                });
+            }
+        }
     } else if (type === "skill1") {
         if(isGojo) {
             myPlayer.x = myPlayer.facing === 'right' ? myPlayer.x + 100 : myPlayer.x - 100;
@@ -198,7 +233,7 @@ bindControlBtn("btn-right", "d");
 
 function updatePosition() {
     if (!isGameStarted) return;
-    const speed = 2.5; // 이동 속도 기존 5에서 2.5로 부드럽게 조정
+    const speed = 2.5; 
     let moved = false;
 
     if (keysPressed["arrowup"] || keysPressed["w"]) { myPlayer.y -= speed; moved = true; }
@@ -245,6 +280,39 @@ function draw() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
+    // [1단계 추가] 테스트 몬스터 그리기 (HP가 남아있을 때만)
+    if (testMonster && testMonster.hp > 0) {
+        ctx.fillStyle = "#ff4444";
+        ctx.fillRect(testMonster.x, testMonster.y, testMonster.size, testMonster.size);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(testMonster.x, testMonster.y, testMonster.size, testMonster.size);
+
+        // 몬스터 이름 및 HP 텍스트
+        const mText = `[HP] ${testMonster.hp}/${testMonster.maxHp} ${testMonster.name}`;
+        ctx.font = "bold 11px 'Segoe UI', sans-serif";
+        const mTextWidth = ctx.measureText(mText).width;
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(testMonster.x + testMonster.size / 2 - mTextWidth / 2 - 4, testMonster.y - 32, mTextWidth + 8, 16);
+        ctx.fillStyle = "#ffaa00";
+        ctx.textAlign = "center";
+        ctx.fillText(mText, testMonster.x + testMonster.size / 2, testMonster.y - 20);
+
+        // HP 게이지 바
+        const barW = 50;
+        const barH = 6;
+        const barX = testMonster.x + testMonster.size / 2 - barW / 2;
+        const barY = testMonster.y - 12;
+
+        ctx.fillStyle = "#333333";
+        ctx.fillRect(barX, barY, barW, barH);
+
+        const hpPercent = testMonster.hp / testMonster.maxHp;
+        ctx.fillStyle = "#00ff88";
+        ctx.fillRect(barX, barY, barW * hpPercent, barH);
+    }
+
     // 2. 캐릭터 그리기
     Object.keys(players).forEach((id) => {
         const p = players[id];
@@ -283,6 +351,18 @@ function draw() {
         ctx.fill();
         eff.life--;
         if (eff.life <= 0) effects.splice(i, 1);
+    }
+
+    // [1단계 추가] 데미지 텍스트 이펙트 그리기
+    for (let i = damageTexts.length - 1; i >= 0; i--) {
+        const dt = damageTexts[i];
+        ctx.font = "bold 14px 'Segoe UI', sans-serif";
+        ctx.fillStyle = dt.color;
+        ctx.textAlign = "center";
+        ctx.fillText(dt.text, dt.x, dt.y);
+        dt.y -= 0.5;
+        dt.life--;
+        if (dt.life <= 0) damageTexts.splice(i, 1);
     }
 
     requestAnimationFrame(draw);
