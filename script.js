@@ -20,9 +20,13 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const statusEl = document.getElementById("status");
 
+// 캐릭터 및 배경 이미지 로드 (bg.png 소문자 적용)
 const CHAR_IMAGES = { char1: new Image(), char2: new Image() };
 CHAR_IMAGES.char1.src = "./gojo.png";
 CHAR_IMAGES.char2.src = "./luffy.png";
+
+const bgImage = new Image();
+bgImage.src = "./bg.png";
 
 // 2. 내 캐릭터 상태
 let myPlayer = {
@@ -37,8 +41,7 @@ const keysPressed = {};
 let isGameStarted = false;
 let myRef = null;
 
-// 🎯 샌드백 보스 및 이펙트 설정
-let dummyBoss = { x: 400, y: 200, size: 70, hp: 5000, maxHp: 5000 };
+// 이펙트 및 데미지 텍스트 배열
 let effects = []; 
 let damageTexts = [];
 
@@ -117,7 +120,7 @@ window.enterGame = function() {
 };
 
 // ==========================================
-// 🔥 전투 스킬 시스템 로직 
+// 🔥 전투 및 스킬 시스템 로직 (사냥터/개인 집 확장 준비)
 // ==========================================
 function updateEnergyUI() {
     const percent = Math.min(100, (myPlayer.energy / myPlayer.maxEnergy) * 100);
@@ -137,34 +140,6 @@ function updateEnergyUI() {
     }
 }
 
-function hitTarget(baseDmg, hitX, hitY) {
-    myPlayer.combo++;
-    let isCrit = false;
-    let finalDmg = baseDmg + (myPlayer.combo * 2);
-    
-    if (myPlayer.energy >= myPlayer.maxEnergy) {
-        isCrit = true;
-        myPlayer.energy = 0; 
-        finalDmg *= 3; 
-    } else {
-        myPlayer.energy = Math.min(myPlayer.maxEnergy, myPlayer.energy + 15);
-    }
-
-    dummyBoss.hp -= finalDmg;
-    if(dummyBoss.hp < 0) dummyBoss.hp = dummyBoss.maxHp; 
-
-    damageTexts.push({
-        x: hitX + (Math.random()*40 - 20),
-        y: hitY - 20,
-        text: isCrit ? `💥 크리티컬! ${finalDmg}` : `${finalDmg} (콤보${myPlayer.combo})`,
-        color: isCrit ? "#ffcc00" : "#ffffff",
-        life: 40,
-        isCrit: isCrit
-    });
-
-    updateEnergyUI();
-}
-
 // 스킬 버튼 이벤트 연동
 const btnAtk = document.getElementById("btn-attack");
 const btnS1 = document.getElementById("btn-skill1");
@@ -179,41 +154,28 @@ function useSkill(type) {
     
     const isGojo = myPlayer.charType === "char1";
     let attackX = myPlayer.facing === 'right' ? myPlayer.x + 60 : myPlayer.x - 60;
-    const dist = Math.hypot(dummyBoss.x - myPlayer.x, dummyBoss.y - myPlayer.y);
-    let hitSuccess = false;
 
     if (type === "attack") {
         effects.push({ x: attackX, y: myPlayer.y + 20, radius: 20, color: isGojo?"#00ffff":"#ff3333", life: 10 });
-        if (dist < 100) hitSuccess = true;
     } else if (type === "skill1") {
         if(isGojo) {
             myPlayer.x = myPlayer.facing === 'right' ? myPlayer.x + 150 : myPlayer.x - 150;
             effects.push({ x: myPlayer.x, y: myPlayer.y, radius: 40, color: "rgba(150, 0, 255, 0.5)", life: 15 });
-            if (dist < 180) hitSuccess = true;
         } else {
             attackX = myPlayer.facing === 'right' ? myPlayer.x + 150 : myPlayer.x - 150;
             effects.push({ x: attackX, y: myPlayer.y + 20, radius: 30, color: "#ff5500", life: 15 });
-            if (dist < 200) hitSuccess = true;
         }
     } else if (type === "skill2") {
         if(isGojo) {
             effects.push({ x: myPlayer.x + 25, y: myPlayer.y + 25, radius: 100, color: "rgba(100, 0, 255, 0.6)", life: 20 });
-            if (dist < 120) hitSuccess = true;
         } else {
-            effects.push({ x: dummyBoss.x + 25, y: dummyBoss.y + 25, radius: 120, color: "rgba(255, 200, 0, 0.5)", life: 20 });
-            if (dist < 300) hitSuccess = true;
+            effects.push({ x: myPlayer.x + 25, y: myPlayer.y + 25, radius: 120, color: "rgba(255, 200, 0, 0.5)", life: 20 });
         }
-    }
-
-    if(hitSuccess) {
-        hitTarget(isGojo ? 20 : 25, dummyBoss.x, dummyBoss.y);
-    } else {
-        myPlayer.combo = 0; 
     }
 }
 
 // ==========================================
-// 🎮 이동 및 조작 로직 (마우스 & 모바일 터치 완벽 대응)
+// 🎮 이동 및 조작 로직
 // ==========================================
 window.addEventListener("keydown", (e) => {
     if(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
@@ -295,15 +257,14 @@ function draw() {
     updatePosition();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. 샌드백 그리기
-    ctx.fillStyle = "#555";
-    ctx.fillRect(dummyBoss.x, dummyBoss.y, dummyBoss.size, dummyBoss.size);
-    ctx.fillStyle = "red";
-    ctx.fillRect(dummyBoss.x, dummyBoss.y - 15, (dummyBoss.hp / dummyBoss.maxHp) * dummyBoss.size, 8);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 14px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("전투 샌드백", dummyBoss.x + dummyBoss.size/2, dummyBoss.y - 20);
+    // 1. 배경 이미지 (bg.png) 그리기
+    if (bgImage && bgImage.complete && bgImage.naturalWidth !== 0) {
+        ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+    } else {
+        // 이미지가 아직 안 로드되었을 경우의 대체 단색 배경
+        ctx.fillStyle = "#1a1a1a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
 
     // 2. 캐릭터 그리기
     Object.keys(players).forEach((id) => {
@@ -343,18 +304,6 @@ function draw() {
         ctx.fill();
         eff.life--;
         if (eff.life <= 0) effects.splice(i, 1);
-    }
-
-    // 4. 데미지 텍스트 팝업
-    for (let i = damageTexts.length - 1; i >= 0; i--) {
-        const dt = damageTexts[i];
-        ctx.fillStyle = dt.color;
-        ctx.font = dt.isCrit ? "bold 24px sans-serif" : "bold 16px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(dt.text, dt.x, dt.y);
-        dt.y -= 1; 
-        dt.life--;
-        if (dt.life <= 0) damageTexts.splice(i, 1);
     }
 
     requestAnimationFrame(draw);
